@@ -30,7 +30,8 @@ def startup():
                               "are 0-{}\nenter -1 for no stupid greedy agents\n".format(
         params.world_graph.num_vertices - 1)).split(',')
     saboteur_pos = input(
-        "enter start position for each saboteur agent (i.e: 1, 1, 0)\npossible positions are 0-{}\nenter -1 for no saboteur agents\n".format(
+        "enter start position for each saboteur agent (i.e: 1, 1, 0)\npossible positions are 0-{}\nenter -1 for no "
+        "saboteur agents\n".format(
             params.world_graph.num_vertices - 1)).split(',')
 
     for pos in human_pos:
