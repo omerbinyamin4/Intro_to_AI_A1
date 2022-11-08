@@ -1,4 +1,4 @@
-from A_1.graph import Graph
+from graph import Graph
 
 global world_graph
 global agents_list
