@@ -1,5 +1,5 @@
 import params
-from utils import dijkstra_dist
+from utils import dijkstra_dist, pick_best_brittle_dest
 
 
 class Agent:
@@ -36,7 +36,7 @@ class Stupid(Agent):
         # dest = pick_best_dest(dist) TODO: should prefer lower population or only lower index?
         dest = min(dist)
         # update environment
-        params.world_graph.get_vertex(dest).rest_population()
+        params.world_graph.get_vertex(dest).reset_population()
         for v in params.world_graph.vert_dict:
             for stop in path:
                 if params.world_graph.get_vertex(stop).is_brittle:
@@ -53,8 +53,27 @@ class Saboteur(Agent):
         super(Agent, self).__init__(pos)
 
     def act(self):
-        print("saboteur acted\n")
-        params.should_simulate = False
+        print("saboteur agent start acting\n")
+        # calculate all paths TODO: it is pretty bruteforce, not sure if we can/want calculate only paths to brittle
+        #  nodes
+        (dist, path) = dijkstra_dist(params.world_graph.get_vetex(self.pos))
+        if all(p == -1 for p in path):
+            params.should_simulate = False
+            return
+        # pick vertex which has the shortest path to from agent pos
+        # dest = pick_best_dest(dist) TODO: should prefer lower population or only lower index?
+        dest = pick_best_brittle_dest(dist)
+        if dest == -1:
+            return
+        # update environment
+        for v in params.world_graph.vert_dict:
+            v.adjacent.pop(dest)
+
+        # change state
+        curr_action_score = calc_score(0, path, self.pos, dest)
+        self.score += curr_action_score
+        # change pos of agent to dest node
+        self.pos = dest
 
 
 def calc_score(rescued_population, path, source, dest):
