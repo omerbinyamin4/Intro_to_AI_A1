@@ -23,16 +23,20 @@ def init_graph_from_file(param):
 
 def startup():
     init_graph_from_file('./input.txt')
-    human_pos = input("enter start position for each human agent (i.e: 1, 1, 0)\npossible positions are 0-{}\nenter "
-                      "-1 for no human agents\n".format(
-        params.world_graph.num_vertices - 1)).split(',')
-    stupid_greedy_pos = input("enter start position for each stupid greedy agent (i.e: 1, 1, 0)\npossible positions "
-                              "are 0-{}\nenter -1 for no stupid greedy agents\n".format(
-        params.world_graph.num_vertices - 1)).split(',')
-    saboteur_pos = input(
-        "enter start position for each saboteur agent (i.e: 1, 1, 0)\npossible positions are 0-{}\nenter -1 for no "
-        "saboteur agents\n".format(
-            params.world_graph.num_vertices - 1)).split(',')
+    human_pos = input("enter start position for each human agent (i.e: 1,1,0)\n"
+        "possible positions are 0-{}\n"
+        "enter -1 for no human agents\n"
+        .format(params.world_graph.num_vertices - 1)).split(',')
+
+    stupid_greedy_pos = input("enter start position for each stupid greedy agent (i.e: 1,1,0)\n"
+        "possible position are 0-{}\n"
+        "enter -1 for no stupid greedy agents\n"
+        .format(params.world_graph.num_vertices - 1)).split(',')
+
+    saboteur_pos = input("enter start position for each saboteur agent (i.e: 1,1,0)\n"
+        "possible positions are 0-{}\n"
+        "enter -1 for no saboteur agents\n"
+        .format(params.world_graph.num_vertices - 1)).split(',')
 
     for pos in human_pos:
         params.agents_list.append(Human(pos))
