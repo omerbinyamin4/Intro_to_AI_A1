@@ -10,9 +10,7 @@ class Agent:
 
 class Human(Agent):
     def __init__(self, pos):
-        # not sure what type C is, make sure this fix works
-        # previous line: super().__init__(self, pos)
-        super(Agent, self).__init__(self, pos)
+        super().__init__(pos)
 
     def act(self):
         print("human acted\n")
@@ -20,7 +18,7 @@ class Human(Agent):
 
 class Stupid(Agent):
     def __init__(self, pos):
-        super(Agent, self).__init__(pos)
+        super().__init__(pos)
 
     def act(self):
         # TODO: ambiguity: should an agent make the changes in the environment by himself or return the changes that
@@ -28,7 +26,7 @@ class Stupid(Agent):
 
         print("stupid greedy agent start acting\n")
         # calculate all paths
-        (dist, path) = dijkstra_dist(params.world_graph.get_vetex(self.pos))
+        (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))
         if all(p == -1 for p in path):
             params.should_simulate = False
             return
@@ -39,8 +37,8 @@ class Stupid(Agent):
         params.world_graph.get_vertex(dest).reset_population()
         for v in params.world_graph.vert_dict:
             for stop in path:
-                if params.world_graph.get_vertex(stop).is_brittle:
-                    v.adjacent.pop(stop)
+                if stop > -1 and params.world_graph.get_vertex(stop).is_brittle:
+                    was_removed = params.world_graph.get_vertex(v).adjacent.pop(stop, False)
         # change state
         curr_action_score = calc_score(params.world_graph.get_vertex(dest).get_population(), path, self.pos, dest)
         self.score += curr_action_score
@@ -50,7 +48,7 @@ class Stupid(Agent):
 
 class Saboteur(Agent):
     def __init__(self, pos):
-        super(Agent, self).__init__(pos)
+        super().__init__(pos)
 
     def act(self):
         print("saboteur agent start acting\n")

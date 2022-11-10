@@ -119,6 +119,7 @@ def pick_best_dest(dist):
         if dist[i] <= min_dist and params.world_graph.get_vertex(i).population <= min_population:
             return i
 
+
 def pick_best_brittle_dest(dist):
     min_dist = 1000000000
     best_v_id = -1
