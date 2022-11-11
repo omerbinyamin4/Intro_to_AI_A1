@@ -21,6 +21,13 @@ def init_graph_from_file(param):
             line_to_edge(line)
     input_file.close()
 
+def check_pos_in_range(pos):
+    if ((pos < -1) or (pos > params.world_graph.num_vertices - 1)):
+        print("### pos {} is not valid ###\n"
+        "possible positions are 0-{} or -1 for no agents\n"
+        "Existing...\n".format(pos, params.world_graph.num_vertices - 1))
+        exit(0)
+
 
 def startup():
     init_graph_from_file('./input.txt')
@@ -35,25 +42,28 @@ def startup():
                               .format(params.world_graph.num_vertices - 1)).split(',')
 
     saboteur_pos = input("enter start position for each saboteur agent (i.e: 1,1,0)\n"
-                         "possible positions are 0-{}\n"
-                         "enter -1 for no saboteur agents\n"
-                         .format(params.world_graph.num_vertices - 1)).split(',')
+        "possible positions are 0-{}\n"
+        "enter -1 for no saboteur agents\n"
+        .format(params.world_graph.num_vertices - 1)).split(',')
 
     for pos in human_pos:
-        params.agents_list.append(Human(int(pos)))
+        check_pos_in_range(int(pos))
+        params.agents_list.append(Human(pos))
 
     for pos in stupid_greedy_pos:
-        params.agents_list.append(Stupid(int(pos)))
+        check_pos_in_range(int(pos))
+        params.agents_list.append(Stupid(pos))
 
     for pos in saboteur_pos:
-        params.agents_list.append(Saboteur(int(pos)))
+        check_pos_in_range(int(pos))
+        params.agents_list.append(Saboteur(pos))
 
     simulate()
     print("simulation ended.\n")
 
 
 def simulate():
-    print("simulation started...\n")
+    print("## simulation started... ##\n")
 
     while params.should_simulate:
         for agent in params.agents_list:
