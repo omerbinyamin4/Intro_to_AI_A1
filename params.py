@@ -7,3 +7,4 @@ global should_simulate
 world_graph = Graph()
 agents_list = []
 should_simulate = True
+debug = False

@@ -26,6 +26,16 @@ class Vertex:
     def reset_population(self):
         self.population = 0
 
+    def print_vertex(self):
+        print("## Vertex properties: ##")
+        print("id: " + str(self.id))
+        print("adjacent:")
+        print(self.adjacent)
+        print("population: " + str(self.population))
+        print("brittle: " + str(self.is_brittle))
+        print("## Finished vertex ##\n")
+
+
 
 class Graph:
     def __init__(self):

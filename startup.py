@@ -3,10 +3,12 @@ from utils import *
 from graph import *
 from agents import *
 import params
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 
-def init_graph_from_file(param):
-    input_file = open('input.txt', 'r')
+
+def init_graph_from_file(input_env):
+    input_file = open(input_env, 'r')
     lines = input_file.readlines()
     # TODO: deal with empty files or files with no vertices
     for line in lines:
@@ -15,6 +17,8 @@ def init_graph_from_file(param):
             continue
         if '#V' in line[0]:
             new_v = line_to_vertex(line)
+            if params.debug:
+                new_v.print_vertex()
             if new_v is not None:
                 params.world_graph.add_vertex(new_v)
         if '#E' in line[0] and len(line) == 4:
@@ -29,8 +33,9 @@ def check_pos_in_range(pos):
         exit(0)
 
 
-def startup():
-    init_graph_from_file('./input.txt')
+def startup(input_env, debug_mode):
+    params.debug = debug_mode
+    init_graph_from_file(input_env)
     human_pos = input("enter start position for each human agent (i.e: 1,1,0)\n"
                           "possible positions are 0-{}\n"
                           "enter -1 for no human agents\n"
@@ -73,4 +78,15 @@ def simulate():
 
 
 if __name__ == '__main__':
-    startup()
+    arg_parser = ArgumentParser(
+        prog="startup.py",
+        formatter_class=RawTextHelpFormatter,
+        description="Simulates agents for the hurricane evacuation problem",
+    )
+    arg_parser.add_argument('-i', "--input_env", default="input.txt", help='Enter input environment')
+    arg_parser.add_argument('-d', "--debug", action='store_true', help='Add this flag if you wish to be in debug mode')
+
+
+    command_line_args = arg_parser.parse_args()
+
+    startup(command_line_args.input_env, command_line_args.debug)
