@@ -90,6 +90,19 @@ def simulate():
             if agent.get_active_status():
                 params.should_simulate = True
                 break
+        # TODO: improve cond to check if there are anymore people to be saved.
+        # TODO: Active property is imporant to check if a agent should keep running, but maybe not good for termination because of sabteur
+        # TODO: Add 'blocked' property to Vertex and support property in code
+        # TODO: calculation of score is incorrect at the moment - should be fixed.
+        # TODO: adjust each move to work according to time units (as opposed to 1 time unit)
+        # TODO: change agent to return a response (new class?) instead of changing the world by itself
+        # TODO: state should be - where is each agent, which vertices has people, which vertices are brittle, which vertices are blocked
+        # I think we should start by letting each agent run alone, and advance from there according to answers on ambiguities..
+        # Ambiguities:
+        # When a time step occurs? after all agents steped or after each agent stepped? 
+        # Check if sabteur makes brittle non brittle or non blocked?
+        # Should stupid greedy consider the fact a saboteur can break/broke a brittle vertix in its path?
+        # if there are 2 greedy agents - should they check where the other agent is headed and go to a different place?
 
     print("## simulation ended ##\n")
 
