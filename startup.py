@@ -5,7 +5,7 @@ from agents import *
 import params
 from argparse import ArgumentParser, RawTextHelpFormatter
 
-
+input_graphs = "./input_graphs"
 
 def init_graph_from_file(input_env):
     input_file = open(input_env, 'r')
@@ -23,15 +23,30 @@ def init_graph_from_file(input_env):
                 params.world_graph.add_vertex(new_v)
         if '#E' in line[0] and len(line) == 4:
             line_to_edge(line)
+    if params.debug:
+        print("vert_dict.keys after init: {}\n".format(params.world_graph.get_vertices_keys()))
     input_file.close()
 
 def check_pos_in_range(pos):
-    if ((pos < -1) or (pos > params.world_graph.num_vertices - 1)):
+    if ((pos < 0) or (pos > params.world_graph.num_vertices - 1)):
         print("### pos {} is not valid ###\n"
         "possible positions are 0-{} or -1 for no agents\n"
         "Existing...\n".format(pos, params.world_graph.num_vertices - 1))
         exit(0)
 
+def init_agents(agents_list, agent_type):
+    if int(agents_list[0]) == -1:
+        return
+    for pos in agents_list:
+        check_pos_in_range(int(pos))
+        if agent_type == "human":
+            params.agents_list.append(Human(int(pos)))
+        elif agent_type == "stupid_greedy":
+            params.agents_list.append(Stupid(int(pos)))
+        elif agent_type == "saboteur":
+            params.agents_list.append(Saboteur(int(pos)))
+        else:
+            print("error: agent type {} not supported".format(agent_type))
 
 def startup(input_env, debug_mode):
     params.debug = debug_mode
@@ -51,30 +66,32 @@ def startup(input_env, debug_mode):
         "enter -1 for no saboteur agents\n"
         .format(params.world_graph.num_vertices - 1)).split(',')
 
-    for pos in human_pos:
-        check_pos_in_range(int(pos))
-        params.agents_list.append(Human(pos))
-
-    for pos in stupid_greedy_pos:
-        check_pos_in_range(int(pos))
-        params.agents_list.append(Stupid(pos))
-
-    for pos in saboteur_pos:
-        check_pos_in_range(int(pos))
-        params.agents_list.append(Saboteur(pos))
+    #TODO : can an agent start in a brittle vertex?
+    init_agents(human_pos, "human")
+    init_agents(stupid_greedy_pos, "stupid_greedy")
+    init_agents(saboteur_pos, "saboteur")
 
     simulate()
-    print("simulation ended.\n")
-
 
 def simulate():
     print("## simulation started... ##\n")
+    if params.debug:
+        print("Agents list: ".format(params.agents_list))
 
     while params.should_simulate:
         for agent in params.agents_list:
-            if params.should_simulate:
+            if agent.get_active_status():
                 agent.act()
                 print_world_state()
+        # Check if simulation should cont
+        params.should_simulate = False
+        for agent in params.agents_list:
+            # If there is an agent still active - simulation should cont
+            if agent.get_active_status():
+                params.should_simulate = True
+                break
+
+    print("## simulation ended ##\n")
 
 
 if __name__ == '__main__':
@@ -89,4 +106,4 @@ if __name__ == '__main__':
 
     command_line_args = arg_parser.parse_args()
 
-    startup(command_line_args.input_env, command_line_args.debug)
+    startup(input_graphs + "/" + command_line_args.input_env, command_line_args.debug)

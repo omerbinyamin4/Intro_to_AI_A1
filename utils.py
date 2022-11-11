@@ -1,10 +1,8 @@
 from graph import *
 import params
+import sys
 
-# TODO: I don't like this usage for infinity value, maybe you know a better one?
-#  (this one is kind of paralel to INT.MAX_VALUE in java)
-infi = 1000000000
-
+infi = sys.maxsize
 
 def line_to_vertex(line):
     v_id = -1
@@ -28,6 +26,10 @@ def line_to_edge(line):
     source = params.world_graph.get_vertex(int(line[1]))
     dest = params.world_graph.get_vertex(int(line[2]))
     source.add_neighbor(dest.id, int(line[3].split('W')[1]))
+    dest.add_neighbor(source.id, int(line[3].split('W')[1]))
+    if params.debug:
+        print("source vertex with id: {} now have adjacent list: {}".format(source.get_id(), source.get_connections()))
+        print("dest vertex with id: {} now have adjacent list: {}\n".format(dest.get_id(), dest.get_connections()))
 
 
 def print_world_state():
@@ -37,7 +39,7 @@ def print_world_state():
 
 # Dijkstra shortest path implementation
 
-def dijkstra_dist(s):
+def dijkstra_dist(start_vertex):
     # Stores distance of each
     # vertex from source vertex
     g = params.world_graph
@@ -51,38 +53,39 @@ def dijkstra_dist(s):
     # for i in range(g.num_vertices):
     #     path[i] = -1
     path = [-1 for i in range(g.num_vertices)]
-    dist[s.id] = 0
-    current = s
+    dist[start_vertex.id] = 0
+    current_vertex = start_vertex
 
     # Set of vertices that has
     # a parent (one or more)
     # marked as visited
     sett = set()
     while True:
-        # Mark current as visited
-        visited[current.id] = True
-        for neighbor in current.adjacent.keys():
+        # Mark current_vertex as visited
+        visited[current_vertex.id] = True
+        for neighbor in current_vertex.adjacent.keys():
             if visited[neighbor]:
                 continue
 
             # Inserting into the
             # visited vertex
             sett.add(neighbor)
-            alt = dist[current.id] + current.adjacent[neighbor]
+            alt_dist = dist[current_vertex.id] + current_vertex.adjacent[neighbor]
 
             # Condition to check the distance
             # is correct and update it
             # if it is minimum from the previous
             # computed distance
-            if alt < dist[neighbor]:
-                dist[neighbor] = alt
-                path[neighbor] = current.id
-        if current.id in sett:
-            sett.remove(current.id)
+            if alt_dist < dist[neighbor]:
+                dist[neighbor] = alt_dist
+                path[neighbor] = current_vertex.id
+
+        if current_vertex.id in sett:
+            sett.remove(current_vertex.id)
         if len(sett) == 0:
             break
 
-        # The new current
+        # The new current_vertex
         min_dist = infi
         next_id = 0
 
@@ -92,7 +95,7 @@ def dijkstra_dist(s):
             if dist[vertex_id] < min_dist:
                 min_dist = dist[vertex_id]
                 next_id = vertex_id
-        current = g.get_vertex(next_id)
+        current_vertex = g.get_vertex(next_id)
 
     return dist, path
 

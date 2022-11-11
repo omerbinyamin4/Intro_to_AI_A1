@@ -5,8 +5,8 @@ class Vertex:
         self.population = population
         self.is_brittle = is_brittle
 
-    def __str__(self):
-        return str(self.id) + ' adjacent: ' + str([x.id for x in self.adjacent])
+    # def __str__(self):
+    #     return str(self.id) + ' adjacent: ' + str([x.id for x in self.adjacent])
 
     def add_neighbor(self, neighbor, weight=0):
         self.adjacent[neighbor] = weight
@@ -64,5 +64,8 @@ class Graph:
         self.vert_dict[frm].add_neighbor(self.vert_dict[to], cost)
         self.vert_dict[to].add_neighbor(self.vert_dict[frm], cost)
 
-    def get_vertices(self):
+    def get_vertices_keys(self):
         return self.vert_dict.keys()
+
+    def get_vertices_values(self):
+        return self.vert_dict.values()
