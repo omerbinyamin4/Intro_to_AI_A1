@@ -1,5 +1,5 @@
 
-from utils import *
+from components import *
 from graph import *
 from agents import *
 import params
