@@ -1,5 +1,5 @@
 import params
-from utils import dijkstra_dist, pick_best_brittle_dest, path_exists
+from utils import dijkstra_dist, pick_best_brittle_dest, path_exists, min_dist_with_people
 
 class Agent:
     def __init__(self, pos):
@@ -39,16 +39,21 @@ class Stupid(Agent):
         #  should be done and the simulator will perform them?
 
         print("stupid greedy agent start acting\n")
+        if not self.get_active_status():
+            return "no-op"
         # calculate all paths
         (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))
-        print(dist)
         print(path)
-        if not path_exists(path):
-            self.agent_terminate
+        print(dist)
+        # pick vertex which has the shortest path to from agent pos which has population
+        dest_vertex = min_dist_with_people(dist, path)
+        print(dest_vertex)
+        exit(0)
+        
+        if dest_vertex == -1:
+            self.agent_terminate()
             return
-        # pick vertex which has the shortest path to from agent pos
-        # dest = pick_best_dest(dist) TODO: should prefer lower population or only lower index?
-        dest_vertex = min(dist)
+        
         # update environment
         params.world_graph.get_vertex(dest_vertex).reset_population()
         for v in params.world_graph.vert_dict:
@@ -70,6 +75,8 @@ class Saboteur(Agent):
 
     def act(self):
         print("saboteur agent start acting\n")
+        if not self.get_active_status():
+            return "no-op"
         # calculate all paths TODO: it is pretty bruteforce, not sure if we can/want calculate only paths to brittle
         #  nodes
         (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))

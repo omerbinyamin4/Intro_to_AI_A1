@@ -80,9 +80,8 @@ def simulate():
 
     while params.should_simulate:
         for agent in params.agents_list:
-            if agent.get_active_status():
-                agent.act()
-                print_world_state()
+            agent.act()
+            print_world_state()
         # Check if simulation should cont
         params.should_simulate = False
         for agent in params.agents_list:

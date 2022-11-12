@@ -23,6 +23,9 @@ class Vertex:
     def get_population(self):
         return self.population
 
+    def has_population(self):
+        return self.population > 0
+
     def reset_population(self):
         self.population = 0
 
