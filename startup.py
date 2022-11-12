@@ -2,6 +2,7 @@
 from components import *
 from graph import *
 from agents import *
+from utils import *
 import params
 from argparse import ArgumentParser, RawTextHelpFormatter
 

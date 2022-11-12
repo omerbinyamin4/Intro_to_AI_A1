@@ -1,5 +1,5 @@
 import params
-from utils import dijkstra_dist, pick_best_brittle_dest
+from utils import *
 from components.minHeap import MinHeap, HeapElement
 
 human_id = 0
@@ -65,31 +65,34 @@ class Human(Agent):
 class Stupid(Agent):
     def __init__(self, pos):
         super().__init__(pos)
+        self.name = "stupid {}".format(params.stupid_id)
+        params.stupid_id += 1
 
     def act(self):
         # TODO: ambiguity: should an agent make the changes in the environment by himself or return the changes that
         #  should be done and the simulator will perform them?
 
-        print("stupid greedy agent start acting\n")
+        print("{} started acting\n".format(self.get_name()))
+        src_vertex = params.world_graph.get_vertex(self.pos)
+        if not self.get_active_status():
+            return "no-op"
         # calculate all paths
-        (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))
-        print(dist)
-        print(path)
-        if all(p == -1 for p in path):
-            params.should_simulate = False
+        (dist, path) = dijkstra_dist(src_vertex)
+
+        # pick vertex which has the shortest path from agent pos which has population
+        dest_vertex_index = min_dist_with_people(dist, path)
+
+        if dest_vertex_index == -1:
+            self.agent_terminate()
             return
-        # pick vertex which has the shortest path to from agent pos
-        # dest = pick_best_dest(dist) TODO: should prefer lower population or only lower index?
-        dest_vertex = min(dist)
-        # update environment
-        params.world_graph.get_vertex(dest_vertex).reset_population()
-        for v in params.world_graph.vert_dict:
-            for stop in path:
-                if stop > -1 and params.world_graph.get_vertex(stop).is_brittle:
-                    was_removed = params.world_graph.get_vertex(v).adjacent.pop(stop, False)
-        # change state
-        # self.score += curr_action_score
-        # change pos of agent to dest node
+        curr_dest_vertex_index = extract_next_vertex_in_path(path, self.pos, dest_vertex_index)
+        curr_dest_vertex = params.world_graph.get_vertex(curr_dest_vertex_index)
+        if params.debug:
+            print("chosen dest_vertex by {} is {} and first vertex in path is {}".format(self.get_name(), dest_vertex_index, curr_dest_vertex_index))
+
+        self.calc_score(src_vertex ,curr_dest_vertex)
+        self.update_env(curr_dest_vertex, dest_vertex_index)
+
         self.pos = curr_dest_vertex_index
         print("{} finished acting\n".format(self.get_name()))
 
