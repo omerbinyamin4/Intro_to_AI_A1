@@ -4,6 +4,7 @@ class Vertex:
         self.adjacent = {}
         self.population = population
         self.is_brittle = is_brittle
+        self.is_broken = False
 
     # def __str__(self):
     #     return str(self.id) + ' adjacent: ' + str([x.id for x in self.adjacent])
@@ -23,8 +24,17 @@ class Vertex:
     def get_population(self):
         return self.population
 
+    def has_population(self):
+        return self.population > 0
+
     def reset_population(self):
         self.population = 0
+    
+    def check_is_brittle(self):
+        return self.is_brittle
+    
+    def break_ver(self):
+        self.is_broken = True
 
     def print_vertex(self):
         print("## Vertex properties: ##")

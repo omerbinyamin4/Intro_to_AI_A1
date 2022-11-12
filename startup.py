@@ -7,6 +7,12 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 
 input_graphs = "./input_graphs"
 
+def print_agent_list():
+    print("## Agents list: ##")
+    for agent in params.agents_list:
+        print(agent.get_name())
+    print("## Finished agent list ##")
+
 def init_graph_from_file(input_env):
     input_file = open(input_env, 'r')
     lines = input_file.readlines()
@@ -74,15 +80,14 @@ def startup(input_env, debug_mode):
     simulate()
 
 def simulate():
-    print("## simulation started... ##\n")
+    print("------------------ Simulation Started ------------------\n")
     if params.debug:
-        print("Agents list: ".format(params.agents_list))
+        print_agent_list()
 
     while params.should_simulate:
         for agent in params.agents_list:
-            if agent.get_active_status():
-                agent.act()
-                print_world_state()
+            agent.act()
+            print_world_state()
         # Check if simulation should cont
         params.should_simulate = False
         for agent in params.agents_list:
@@ -104,7 +109,7 @@ def simulate():
         # Should stupid greedy consider the fact a saboteur can break/broke a brittle vertix in its path?
         # if there are 2 greedy agents - should they check where the other agent is headed and go to a different place?
 
-    print("## simulation ended ##\n")
+    print("------------------ Simulation Ended ------------------\n")
 
 
 if __name__ == '__main__':
