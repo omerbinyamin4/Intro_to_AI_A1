@@ -1,5 +1,5 @@
 import params
-from utils import dijkstra_dist, pick_best_brittle_dest, path_exists, min_dist_with_people
+from utils import *
 
 class Agent:
     def __init__(self, pos):
@@ -7,6 +7,7 @@ class Agent:
         self.score = 0
         self.active = True
         self.name = ""
+        self.score = 0
 
     def get_active_status(self):
         return self.active
@@ -17,6 +18,34 @@ class Agent:
 
     def print_name(self):
         print("Agents name is: {}".format(self.name))
+
+    def get_name(self):
+        return self.name
+
+    def update_env(self, curr_dest_vertex, dest_vertex_index):
+        if curr_dest_vertex.get_id() == dest_vertex_index: # vertex we are traveling to has population
+            curr_dest_vertex.reset_population()
+        if curr_dest_vertex.check_is_brittle():
+            curr_dest_vertex.break_ver()
+
+    def update_score(self, add_score):
+        self.score += add_score
+        if params.debug:
+            print
+
+    def get_score(self):
+        return self.score
+
+    def calc_score(self, src_vertex, dest_vertex):
+        if params.debug:
+            print("score before update is: {}".format(self.score))
+        time_taken = src_vertex.get_weight(dest_vertex.get_id())
+        score = (dest_vertex.get_population() * 1000) - time_taken
+        self.score += score
+        if params.debug:
+            print("this round score is: {}".format(score))
+            print("score after update is: {}".format(self.score))
+        return 
 
 class Human(Agent):
     def __init__(self, pos):
@@ -38,33 +67,32 @@ class Stupid(Agent):
         # TODO: ambiguity: should an agent make the changes in the environment by himself or return the changes that
         #  should be done and the simulator will perform them?
 
-        print("stupid greedy agent start acting\n")
+        print("{} started acting\n".format(self.get_name()))
+        src_vertex = params.world_graph.get_vertex(self.pos)
         if not self.get_active_status():
             return "no-op"
         # calculate all paths
-        (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))
-        print(path)
-        print(dist)
-        # pick vertex which has the shortest path to from agent pos which has population
-        dest_vertex = min_dist_with_people(dist, path)
-        print(dest_vertex)
-        exit(0)
+        (dist, path) = dijkstra_dist(src_vertex)
+
+        # pick vertex which has the shortest path from agent pos which has population
+        dest_vertex_index = min_dist_with_people(dist, path)
         
-        if dest_vertex == -1:
+        if dest_vertex_index == -1:
             self.agent_terminate()
             return
         
-        # update environment
-        params.world_graph.get_vertex(dest_vertex).reset_population()
-        for v in params.world_graph.vert_dict:
-            for stop in path:
-                if stop > -1 and params.world_graph.get_vertex(stop).is_brittle:
-                    was_removed = params.world_graph.get_vertex(v).adjacent.pop(stop, False)
+        curr_dest_vertex_index = extract_next_vertex_in_path(path, self.pos, dest_vertex_index)
+        curr_dest_vertex = params.world_graph.get_vertex(curr_dest_vertex_index)
+        if params.debug:
+            print("chosen dest_vertex by {} is {} and first vertex in path is {}".format(self.get_name(), dest_vertex_index, curr_dest_vertex_index))
+        
+        self.calc_score(src_vertex ,curr_dest_vertex)
+        self.update_env(curr_dest_vertex, dest_vertex_index)
         # change state
-        curr_action_score = calc_score(params.world_graph.get_vertex(dest_vertex).get_population(), path, self.pos, dest_vertex)
-        self.score += curr_action_score
+        # self.score += curr_action_score
         # change pos of agent to dest node
-        self.pos = dest_vertex
+        self.pos = curr_dest_vertex_index
+        print("{} finished acting\n".format(self.get_name()))
 
 
 class Saboteur(Agent):
@@ -80,7 +108,7 @@ class Saboteur(Agent):
         # calculate all paths TODO: it is pretty bruteforce, not sure if we can/want calculate only paths to brittle
         #  nodes
         (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))
-        if not path_exists(path):
+        if True:
             self.agent_terminate
             return
         # pick vertex which has the shortest path to from agent pos
@@ -97,13 +125,3 @@ class Saboteur(Agent):
         self.score += curr_action_score
         # change pos of agent to dest node
         self.pos = dest
-
-
-def calc_score(rescued_population, path, source, dest):
-    curr = dest
-    time_taken = 0
-    while dest != source:
-        time_taken += params.world_graph.get_vertex(path[curr]).get_weight(curr)
-        curr = path[curr]
-    print("time taken: {}".format(time_taken))
-    return (rescued_population * 1000) - time_taken
