@@ -130,3 +130,8 @@ def pick_best_brittle_dest(dist):
         if dist[i] < min_dist and params.world_graph.get_vertex(i).is_brittle:
             best_v_id = i
     return best_v_id
+
+def path_exists(path):
+    if all(p == -1 for p in path):
+        return False
+    return True

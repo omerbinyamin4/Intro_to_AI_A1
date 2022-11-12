@@ -1,7 +1,5 @@
 import params
-from utils import dijkstra_dist, pick_best_brittle_dest
-
-human_id = 0
+from utils import dijkstra_dist, pick_best_brittle_dest, path_exists
 
 class Agent:
     def __init__(self, pos):
@@ -24,7 +22,7 @@ class Human(Agent):
     def __init__(self, pos):
         super().__init__(pos)
         self.name = "human {}".format(params.human_id)
-        params.human_id = params.human_id + 1
+        params.human_id += 1
 
     def act(self):
         print("human acted\n")
@@ -33,6 +31,8 @@ class Human(Agent):
 class Stupid(Agent):
     def __init__(self, pos):
         super().__init__(pos)
+        self.name = "stupid {}".format(params.stupid_id)
+        params.stupid_id += 1
 
     def act(self):
         # TODO: ambiguity: should an agent make the changes in the environment by himself or return the changes that
@@ -43,8 +43,8 @@ class Stupid(Agent):
         (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))
         print(dist)
         print(path)
-        if all(p == -1 for p in path):
-            params.should_simulate = False
+        if not path_exists(path):
+            self.agent_terminate
             return
         # pick vertex which has the shortest path to from agent pos
         # dest = pick_best_dest(dist) TODO: should prefer lower population or only lower index?
@@ -65,14 +65,16 @@ class Stupid(Agent):
 class Saboteur(Agent):
     def __init__(self, pos):
         super().__init__(pos)
+        self.name = "saboteur {}".format(params.saboteur_id)
+        params.saboteur_id += 1
 
     def act(self):
         print("saboteur agent start acting\n")
         # calculate all paths TODO: it is pretty bruteforce, not sure if we can/want calculate only paths to brittle
         #  nodes
         (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))
-        if all(p == -1 for p in path):
-            params.should_simulate = False
+        if not path_exists(path):
+            self.agent_terminate
             return
         # pick vertex which has the shortest path to from agent pos
         # dest = pick_best_dest(dist) TODO: should prefer lower population or only lower index?
