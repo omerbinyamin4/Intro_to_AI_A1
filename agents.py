@@ -127,3 +127,73 @@ class Saboteur(Agent):
         self.score += curr_action_score
         # change pos of agent to dest node
         self.pos = dest
+
+# Search Agents (task #2)
+
+class Greedy_search(Agent):
+    def _init_(self, pos, h_func):
+        super()._init_(pos)
+        self.fringe = MinHeap()
+        self.h_func = h_func
+        # initialize fringe to start point
+        self.fringe.insert_element(HeapElement(h_func(pos), pos))
+
+    def act(self):
+        if self.fringe.is_empty():
+            # TODO: should return none and simulator terminate? or should also change agent state to terminate?
+            return None
+
+        curr_vertex_id = self.fringe.extractMin().value
+        if self.goal_test(curr_vertex_id):
+            return curr_vertex_id
+
+        self.expand_and_insert_to_fringe(curr_vertex_id)
+
+    def expand_and_insert_to_fringe(self, vertex_id):
+        graph_vertex = params.world_graph.get_vertex(vertex_id)
+        if graph_vertex is not None:
+            for neighbor in graph_vertex.adjacent.keys():
+                self.fringe.insert_element(HeapElement(self.h_func(neighbor), neighbor))
+
+    def goal_test(self, vertex_id):
+        # TODO: imp test if there are more people to rescue or goal achieved?
+        return True
+
+
+class A_star_search(Agent):
+    def _init_(self, pos, h_func):
+        super()._init_(pos)
+        self.open = MinHeap()
+        self.closed = MinHeap()
+        self.h_func = h_func
+        self.num_of_expands = 0
+        # initialize fringe to start point
+        self.open.insert_element(HeapElement(h_func(pos), pos))
+
+    def act(self):
+        if self.open.is_empty():
+            # TODO: should return none and simulator terminate? or should also change agent state to terminate?
+            return None
+
+        curr_vertex_id = self.open.extractMin().value
+        if self.goal_test(curr_vertex_id):
+            return curr_vertex_id
+
+        if not self.closed.contains(HeapElement(self.h(curr_vertex_id), curr_vertex_id)):
+            self.closed.insert_element(HeapElement(self.h(curr_vertex_id), curr_vertex_id))
+            # TODO: what if an element with same value but diff key (h(value)) exists in closed?
+            if self.num_of_expands < params.expansions_limit:
+                self.expand_and_insert_to_open(curr_vertex_id)
+                self.num_of_expands += 1
+            else:
+                return None
+
+    def expand_and_insert_to_open(self, vertex_id):
+        graph_vertex = params.world_graph.get_vertex(vertex_id)
+        if graph_vertex is not None:
+            for neighbor in graph_vertex.adjacent.keys():
+                self.open.insert_element(HeapElement(self.h_func(neighbor), neighbor))
+
+    def goal_test(self, vertex_id):
+        # TODO: imp test if there are more people to rescue or goal achieved?
+        return True
