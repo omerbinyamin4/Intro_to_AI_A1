@@ -4,6 +4,7 @@ import sys
 
 infi = sys.maxsize
 
+
 def line_to_vertex(line):
     v_id = -1
     v_population = 0
@@ -34,7 +35,11 @@ def line_to_edge(line):
 
 def print_world_state():
     # TODO: refactor to print actual desired state
-    print("## state ##\n")
+    print("## world state ##")
+    for vertex in params.world_graph.vert_dict:
+        params.world_graph.get_vertex(vertex).print_vertex()
+    for agent in params.agents_list:
+        agent.print_agent()
 
 
 # Dijkstra shortest path implementation
@@ -131,6 +136,7 @@ def pick_best_brittle_dest(dist):
             best_v_id = i
     return best_v_id
 
+
 # Returns index of vertex to choose to go to next, or -1 if doesn't exist
 def min_dist_with_people(dist, path):
     # 0 is always the distance to current index, which we don't want to select.
@@ -138,13 +144,14 @@ def min_dist_with_people(dist, path):
     new_dist[dist.index(0)] = infi
     while (len(new_dist) != 0):
         curr_vertex_dist = min(new_dist)
-        if curr_vertex_dist == infi: # vertex is unreachable or self
+        if curr_vertex_dist == infi:  # vertex is unreachable or self
             return -1
         curr_vertex = params.world_graph.get_vertex(dist.index(curr_vertex_dist))
-        if curr_vertex.has_population(): #Found good vertex
+        if curr_vertex.has_population():  # Found good vertex
             return dist.index(curr_vertex_dist)
         new_dist.remove(curr_vertex_dist)
     return -1
+
 
 # Extracts next vertex in path by traveling from dest to src
 def extract_next_vertex_in_path(path, src_vertex_index, dest_vertex_index):

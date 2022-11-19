@@ -1,3 +1,6 @@
+import params
+
+
 class Vertex:
     def __init__(self, node, population, is_brittle):
         self.id = node
@@ -5,6 +8,7 @@ class Vertex:
         self.population = population
         self.is_brittle = is_brittle
         self.is_broken = False
+        self.solution_parent = None
 
     # def __str__(self):
     #     return str(self.id) + ' adjacent: ' + str([x.id for x in self.adjacent])
@@ -28,13 +32,17 @@ class Vertex:
         return self.population > 0
 
     def reset_population(self):
+        params.total_victims = params.total_victims - self.population
         self.population = 0
-    
+
     def check_is_brittle(self):
         return self.is_brittle
-    
+
     def break_ver(self):
         self.is_broken = True
+
+    def check_if_broken(self):
+        return self.is_broken
 
     def print_vertex(self):
         print("## Vertex properties: ##")
@@ -43,8 +51,9 @@ class Vertex:
         print(self.adjacent)
         print("population: " + str(self.population))
         print("brittle: " + str(self.is_brittle))
+        if self.is_brittle:
+            print("broken: " + str(self.is_broken))
         print("## Finished vertex ##\n")
-
 
 
 class Graph:

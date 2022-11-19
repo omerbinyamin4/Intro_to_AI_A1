@@ -28,6 +28,7 @@ def init_graph_from_file(input_env):
                 new_v.print_vertex()
             if new_v is not None:
                 params.world_graph.add_vertex(new_v)
+                params.total_victims += new_v.population
         if '#E' in line[0] and len(line) == 4:
             line_to_edge(line)
     if params.debug:

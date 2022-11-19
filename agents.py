@@ -5,6 +5,15 @@ from components.minHeap import MinHeap, HeapElement
 human_id = 0
 
 
+def generate_solution(last_vertex_id):
+    solution = []
+    curr_sol_vertex = params.world_graph.get_vertex(last_vertex_id)
+    while curr_sol_vertex.path_parent is not None:
+        solution.append(curr_sol_vertex.path_parent)
+        curr_sol_vertex = params.world_graph.get_vertex(curr_sol_vertex.path_parent)
+    return solution
+
+
 class Agent:
     def __init__(self, pos):
         self.pos = pos
@@ -27,7 +36,7 @@ class Agent:
         return self.name
 
     def update_env(self, curr_dest_vertex, dest_vertex_index):
-        if curr_dest_vertex.get_id() == dest_vertex_index: # vertex we are traveling to has population
+        if curr_dest_vertex.get_id() == dest_vertex_index:  # vertex we are traveling to has population
             curr_dest_vertex.reset_population()
         if curr_dest_vertex.check_is_brittle():
             curr_dest_vertex.break_ver()
@@ -50,6 +59,13 @@ class Agent:
             print("this round score is: {}".format(score))
             print("score after update is: {}".format(self.score))
         return
+
+    def print_agent(self):
+        print("## {} properties: ##".format(self.name))
+        print("Agent position is: " + str(self.pos))
+        print("Agent score is: " + str(self.score))
+        print("## finished agent ##\n")
+
 
 class Human(Agent):
     def __init__(self, pos):
@@ -88,9 +104,11 @@ class Stupid(Agent):
         curr_dest_vertex_index = extract_next_vertex_in_path(path, self.pos, dest_vertex_index)
         curr_dest_vertex = params.world_graph.get_vertex(curr_dest_vertex_index)
         if params.debug:
-            print("chosen dest_vertex by {} is {} and first vertex in path is {}".format(self.get_name(), dest_vertex_index, curr_dest_vertex_index))
+            print("chosen dest_vertex by {} is {} and first vertex in path is {}".format(self.get_name(),
+                                                                                         dest_vertex_index,
+                                                                                         curr_dest_vertex_index))
 
-        self.calc_score(src_vertex ,curr_dest_vertex)
+        self.calc_score(src_vertex, curr_dest_vertex)
         self.update_env(curr_dest_vertex, dest_vertex_index)
 
         self.pos = curr_dest_vertex_index
@@ -128,11 +146,17 @@ class Saboteur(Agent):
         # change pos of agent to dest node
         self.pos = dest
 
+
 # Search Agents (task #2)
 
+def goal_test():
+    return params.total_victims == 0
+
+
 class Greedy_search(Agent):
-    def _init_(self, pos, h_func):
-        super()._init_(pos)
+    def __init__(self, pos, h_func):
+        super().__init__(pos)
+        self.name = "greedy stupid"
         self.fringe = MinHeap()
         self.h_func = h_func
         # initialize fringe to start point
@@ -140,12 +164,23 @@ class Greedy_search(Agent):
 
     def act(self):
         if self.fringe.is_empty():
+            self.active = False
             # TODO: should return none and simulator terminate? or should also change agent state to terminate?
-            return None
+            # return None
 
         curr_vertex_id = self.fringe.extractMin().value
-        if self.goal_test(curr_vertex_id):
-            return curr_vertex_id
+
+        # ignore brittle broken (already visited vertices)
+        while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
+            curr_vertex_id = self.fringe.extractMin().value
+
+        curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
+        # rescue people and update env
+        curr_vertex.reset_population()  # also reduces its population from total_victims
+        if curr_vertex.check_is_brittle():
+            curr_vertex.break_ver()
+        if goal_test():
+            return generate_solution(curr_vertex_id)
 
         self.expand_and_insert_to_fringe(curr_vertex_id)
 
@@ -153,16 +188,13 @@ class Greedy_search(Agent):
         graph_vertex = params.world_graph.get_vertex(vertex_id)
         if graph_vertex is not None:
             for neighbor in graph_vertex.adjacent.keys():
+                neighbor.solution_parent = graph_vertex.id
                 self.fringe.insert_element(HeapElement(self.h_func(neighbor), neighbor))
-
-    def goal_test(self, vertex_id):
-        # TODO: imp test if there are more people to rescue or goal achieved?
-        return True
 
 
 class A_star_search(Agent):
-    def _init_(self, pos, h_func):
-        super()._init_(pos)
+    def __init__(self, pos, h_func):
+        super().__init__(pos)
         self.open = MinHeap()
         self.closed = MinHeap()
         self.h_func = h_func
@@ -172,12 +204,23 @@ class A_star_search(Agent):
 
     def act(self):
         if self.open.is_empty():
+            self.active = False
             # TODO: should return none and simulator terminate? or should also change agent state to terminate?
-            return None
+            # return None
 
-        curr_vertex_id = self.open.extractMin().value
-        if self.goal_test(curr_vertex_id):
-            return curr_vertex_id
+        curr_vertex_id = self.fringe.extractMin().value
+
+        # ignore brittle broken (already visited vertices)
+        while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
+            curr_vertex_id = self.fringe.extractMin().value
+
+        curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
+        # rescue people and update env
+        curr_vertex.reset_population()  # also reduces its population from total_victims
+        if curr_vertex.check_is_brittle():
+            curr_vertex.break_ver()
+        if goal_test():
+            return generate_solution(curr_vertex_id)
 
         if not self.closed.contains(HeapElement(self.h(curr_vertex_id), curr_vertex_id)):
             self.closed.insert_element(HeapElement(self.h(curr_vertex_id), curr_vertex_id))
@@ -186,14 +229,13 @@ class A_star_search(Agent):
                 self.expand_and_insert_to_open(curr_vertex_id)
                 self.num_of_expands += 1
             else:
-                return None
+                self.active = False
+                # TODO: should return none and simulator terminate? or should also change agent state to terminate?
+                # return None
 
     def expand_and_insert_to_open(self, vertex_id):
         graph_vertex = params.world_graph.get_vertex(vertex_id)
         if graph_vertex is not None:
             for neighbor in graph_vertex.adjacent.keys():
+                neighbor.solution_parent = graph_vertex.id
                 self.open.insert_element(HeapElement(self.h_func(neighbor), neighbor))
-
-    def goal_test(self, vertex_id):
-        # TODO: imp test if there are more people to rescue or goal achieved?
-        return True
