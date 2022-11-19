@@ -11,3 +11,5 @@ stupid_id = 0
 saboteur_id = 0
 
 expansions_limit = 10000
+# TODO: write prompt to get this variable from user when applying real time a* search agent
+user_L = 10

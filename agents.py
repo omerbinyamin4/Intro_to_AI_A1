@@ -239,3 +239,56 @@ class A_star_search(Agent):
             for neighbor in graph_vertex.adjacent.keys():
                 neighbor.solution_parent = graph_vertex.id
                 self.open.insert_element(HeapElement(self.h_func(neighbor), neighbor))
+
+class realtime_A_star_search(Agent):
+    def __init__(self, pos, h_func):
+        super().__init__(pos)
+        self.open = MinHeap()
+        self.closed = MinHeap()
+        self.h_func = h_func
+        self.num_of_expands = 0
+        # initialize fringe to start point
+        self.open.insert_element(HeapElement(h_func(pos), pos))
+
+    def act(self):
+        if self.open.is_empty():
+            self.active = False
+            # TODO: should return none and simulator terminate? or should also change agent state to terminate?
+            # return None
+
+        curr_vertex_id = self.fringe.extractMin().value
+
+        # ignore brittle broken (already visited vertices)
+        while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
+            curr_vertex_id = self.fringe.extractMin().value
+
+        curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
+        # rescue people and update env
+        curr_vertex.reset_population()  # also reduces its population from total_victims
+        if curr_vertex.check_is_brittle():
+            curr_vertex.break_ver()
+        if goal_test():
+            return generate_solution(curr_vertex_id)
+
+        if not self.closed.contains(HeapElement(self.h(curr_vertex_id), curr_vertex_id)):
+            self.closed.insert_element(HeapElement(self.h(curr_vertex_id), curr_vertex_id))
+            # TODO: what if an element with same value but diff key (h(value)) exists in closed?
+            if self.num_of_expands < params.user_L:
+                self.expand_and_insert_to_open(curr_vertex_id)
+                self.num_of_expands += 1
+            else:
+                so_far_sol = generate_solution(curr_vertex_id)
+                self.pos = so_far_sol[1] # move agent one step further
+                # TODO: update env according to the step (reset population, break vertex if brittle
+                self.num_of_expands = 0
+                self.active = False
+                # TODO: should return none and simulator terminate? or should also change agent state to terminate?
+                # return None
+
+    def expand_and_insert_to_open(self, vertex_id):
+        graph_vertex = params.world_graph.get_vertex(vertex_id)
+        if graph_vertex is not None:
+            for neighbor in graph_vertex.adjacent.keys():
+                neighbor.solution_parent = graph_vertex.id
+                self.open.insert_element(HeapElement(self.h_func(neighbor), neighbor))
+
