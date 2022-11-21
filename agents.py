@@ -22,6 +22,8 @@ class Agent:
         self.active = True
         self.name = ""
         self.score = 0
+        self.full_path = str(pos)
+        self.type = -1
 
     def get_active_status(self):
         return self.active
@@ -54,7 +56,17 @@ class Agent:
         if params.debug:
             print("score before update is: {}".format(self.score))
         time_taken = src_vertex.get_weight(dest_vertex.get_id())
-        score = (dest_vertex.get_population() * 1000) - time_taken
+        score = 0
+
+        if self.type == params.AGENT_TYPE_STUPID:
+            score = (dest_vertex.get_population() * 1000) - time_taken
+        elif self.type == params.AGENT_TYPE_SABOTEUR:
+            score -= time_taken
+            if dest_vertex.brittle_not_broken():
+                score += 1000
+        else:
+            params.agent_type_doesnt_exist(self.type)
+
         self.score += score
         if params.debug:
             print("this round score is: {}".format(score))
@@ -67,6 +79,8 @@ class Agent:
         print("Agent score is: " + str(self.score))
         print("## finished agent ##\n")
 
+    def update_full_path(self, next_vertex_idx):
+        self.full_path += "->{}".format(str(next_vertex_idx))
 
 class Human(Agent):
     def __init__(self, pos):
@@ -84,6 +98,7 @@ class Stupid(Agent):
         super().__init__(pos)
         self.name = "stupid {}".format(params.stupid_id)
         params.stupid_id += 1
+        self.type = params.AGENT_TYPE_STUPID
 
     def act(self):
         # TODO: ambiguity: should an agent make the changes in the environment by himself or return the changes that
@@ -111,6 +126,9 @@ class Stupid(Agent):
 
         self.calc_score(src_vertex, curr_dest_vertex)
         self.update_env(curr_dest_vertex, dest_vertex_index)
+        self.update_full_path(curr_dest_vertex_index)
+        if params.debug:
+            print("{} full path is: {}".format(self.name ,self.full_path))
 
         self.pos = curr_dest_vertex_index
         print("{} finished acting\n".format(self.get_name()))
@@ -121,9 +139,11 @@ class Saboteur(Agent):
         super().__init__(pos)
         self.name = "saboteur {}".format(params.saboteur_id)
         params.saboteur_id += 1
+        self.type = params.AGENT_TYPE_SABOTEUR
 
     def act(self):
         print("{} started acting\n".format(self.get_name()))
+        src_vertex = params.world_graph.get_vertex(self.pos)
         if not self.get_active_status():
             return "no-op"
 
@@ -135,19 +155,22 @@ class Saboteur(Agent):
         if dest_vertex_index == -1:
             self.agent_terminate()
             return
-        # pick vertex which has the shortest path to from agent pos
-        # dest = pick_best_dest(dist) TODO: should prefer lower population or only lower index?
-        dest = pick_best_brittle_dest(dist)
-        if dest == -1:
-            return
-        # update environment
-        for v in params.world_graph.vert_dict:
-            v.adjacent.pop(dest)
+        
+        curr_dest_vertex_index = extract_next_vertex_in_path(path, self.pos, dest_vertex_index)
+        curr_dest_vertex = params.world_graph.get_vertex(curr_dest_vertex_index)
+        if params.debug:
+            print("chosen dest_vertex by {} is {} and first vertex in path is {}".format(self.get_name(),
+                                                                                         dest_vertex_index,
+                                                                                         curr_dest_vertex_index))
 
-        # change state
-        self.calc_score(0, path, self.pos, dest)
-        # change pos of agent to dest node
-        self.pos = dest
+        self.calc_score(src_vertex, curr_dest_vertex)
+        self.update_env(curr_dest_vertex, dest_vertex_index)
+        self.update_full_path(curr_dest_vertex_index)
+        if params.debug:
+            print("{} full path is: {}".format(self.name ,self.full_path))
+
+        self.pos = curr_dest_vertex_index
+        print("{} finished acting\n".format(self.get_name()))
 
 
 # Search Agents (task #2)

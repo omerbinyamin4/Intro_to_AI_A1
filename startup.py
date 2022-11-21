@@ -10,10 +10,10 @@ input_graphs = "./input_graphs"
 
 
 def print_agent_list():
-    print("## Agents list: ##")
+    print("## Agents list ##")
     for agent in params.agents_list:
         print(agent.get_name())
-    print("## Finished agent list ##")
+    print("## Finished agent list ##\n")
 
 
 def init_graph_from_file(input_env):
@@ -26,15 +26,11 @@ def init_graph_from_file(input_env):
             continue
         if '#V' in line[0]:
             new_v = line_to_vertex(line)
-            if params.debug:
-                new_v.print_vertex()
             if new_v is not None:
                 params.world_graph.add_vertex(new_v)
                 params.total_victims += new_v.population
         if '#E' in line[0] and len(line) == 4:
             line_to_edge(line)
-    if params.debug:
-        print("vert_dict.keys after init: {}\n".format(params.world_graph.get_vertices_keys()))
     input_file.close()
 
 
@@ -60,14 +56,14 @@ def init_agents(agents_list, agent_type):
         elif agent_type == params.AGENT_TYPE_GREEDY_SEARCH:
             params.agents_list.append(Greedy_search(int(pos)))
         else:
-            print("error: agent type {} not supported".format(agent_type))
+            params.agent_type_doesnt_exist(agent_type)
 
 
 def startup(input_env, debug_mode):
     params.debug = debug_mode
     init_graph_from_file(input_env)
     convert_world_to_shortest_paths_clique(params.world_graph)
-    task = input("insert task number to run\n")
+    task = input("Insert task number to run:\n")
     if int(task) == 1:
         human_pos = input("enter start position for each human agent (i.e: 1,1,0)\n"
                           "possible positions are 0-{}\n"
@@ -97,12 +93,15 @@ def startup(input_env, debug_mode):
         init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
 
         simulate_2()
+    else:
+        print("Error: inserted non existing task number: {}".format(int(task)))
 
 
 def simulate():
     print("------------------ Simulation Started ------------------\n")
     if params.debug:
         print_agent_list()
+        print_world_state()
 
     while params.should_simulate:
         for agent in params.agents_list:
@@ -113,22 +112,10 @@ def simulate():
         for agent in params.agents_list:
             # If there is an agent still active - simulation should cont
             if agent.get_active_status():
-                agent.print_name()
+                if params.debug:
+                    agent.print_name()
                 params.should_simulate = True
                 break
-        # TODO: improve cond to check if there are anymore people to be saved.
-        # TODO: Active property is imporant to check if a agent should keep running, but maybe not good for termination because of sabteur
-        # TODO: Add 'blocked' property to Vertex and support property in code
-        # TODO: calculation of score is incorrect at the moment - should be fixed.
-        # TODO: adjust each move to work according to time units (as opposed to 1 time unit)
-        # TODO: change agent to return a response (new class?) instead of changing the world by itself
-        # TODO: state should be - where is each agent, which vertices has people, which vertices are brittle, which vertices are blocked
-        # I think we should start by letting each agent run alone, and advance from there according to answers on ambiguities..
-        # Ambiguities:
-        # When a time step occurs? after all agents steped or after each agent stepped? 
-        # Check if sabteur makes brittle non brittle or non blocked?
-        # Should stupid greedy consider the fact a saboteur can break/broke a brittle vertix in its path?
-        # if there are 2 greedy agents - should they check where the other agent is headed and go to a different place?
 
     print("------------------ Simulation Ended ------------------\n")
 

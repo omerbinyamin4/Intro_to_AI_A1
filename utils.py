@@ -137,24 +137,27 @@ def pick_best_brittle_dest(dist):
             best_v_id = i
     return best_v_id
 
+def all_infi(dist):
+    for idx in dist:
+        if idx != infi:
+            return False
+    return True
 
 # Returns index of vertex to choose to go to next, or -1 if doesn't exist
 def min_dist_with_cond(dist, agent_type):
     # 0 is always the distance to current index, which we don't want to select.
-    new_dist = dist.copy()
-    new_dist[dist.index(0)] = infi
-    while (len(new_dist) != 0):
-        curr_vertex_dist = min(new_dist)
+    dist[dist.index(0)] = infi
+    while (not all_infi(dist)):
+        curr_vertex_dist = min(dist)
         if curr_vertex_dist == infi:  # vertex is unreachable or self
             return -1
         curr_vertex = params.world_graph.get_vertex(dist.index(curr_vertex_dist))
-        if (agent_type == params.AGENT_TYPE_STUPID) and (
-        curr_vertex.has_population()):  # Found good vertex for stupid greedy
+        if (agent_type == params.AGENT_TYPE_STUPID) and (curr_vertex.has_population()):  # Found good vertex for stupid greedy
             return dist.index(curr_vertex_dist)
-        if (agent_type == params.AGENT_TYPE_SABOTEUR) and (
-        curr_vertex.brittle_not_broken()):  # Found good vertex for saboteur
+        elif (agent_type == params.AGENT_TYPE_SABOTEUR) and (curr_vertex.brittle_not_broken()):  # Found good vertex for saboteur
             return dist.index(curr_vertex_dist)
-        new_dist.remove(curr_vertex_dist)
+
+        dist[dist.index(curr_vertex_dist)] = infi
     return -1
 
 
