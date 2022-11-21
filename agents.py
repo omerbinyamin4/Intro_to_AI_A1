@@ -96,7 +96,7 @@ class Stupid(Agent):
         (dist, path) = dijkstra_dist(src_vertex)
 
         # pick vertex which has the shortest path from agent pos which has population
-        dest_vertex_index = min_dist_with_people(dist, path)
+        dest_vertex_index = min_dist_with_cond(dist, params.AGENT_TYPE_STUPID)
 
         if dest_vertex_index == -1:
             self.agent_terminate()
@@ -122,14 +122,17 @@ class Saboteur(Agent):
         params.saboteur_id += 1
 
     def act(self):
-        print("saboteur agent start acting\n")
+        print("{} started acting\n".format(self.get_name()))
         if not self.get_active_status():
             return "no-op"
-        # calculate all paths TODO: it is pretty bruteforce, not sure if we can/want calculate only paths to brittle
-        #  nodes
+
         (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))
-        if True:
-            self.agent_terminate
+
+        # pick vertex which has the shortest path from agent pos which is brittle and not broken
+        dest_vertex_index = min_dist_with_cond(dist, params.AGENT_TYPE_SABOTEUR)
+
+        if dest_vertex_index == -1:
+            self.agent_terminate()
             return
         # pick vertex which has the shortest path to from agent pos
         # dest = pick_best_dest(dist) TODO: should prefer lower population or only lower index?

@@ -35,11 +35,12 @@ def line_to_edge(line):
 
 def print_world_state():
     # TODO: refactor to print actual desired state
-    print("## world state ##")
+    print("## WORLD STATE ##\n")
     for vertex in params.world_graph.vert_dict:
         params.world_graph.get_vertex(vertex).print_vertex()
     for agent in params.agents_list:
         agent.print_agent()
+    print("## FINISHED WORLD STATE ##\n")
 
 
 # Dijkstra shortest path implementation
@@ -138,7 +139,7 @@ def pick_best_brittle_dest(dist):
 
 
 # Returns index of vertex to choose to go to next, or -1 if doesn't exist
-def min_dist_with_people(dist, path):
+def min_dist_with_cond(dist, agent_type):
     # 0 is always the distance to current index, which we don't want to select.
     new_dist = dist.copy()
     new_dist[dist.index(0)] = infi
@@ -147,7 +148,9 @@ def min_dist_with_people(dist, path):
         if curr_vertex_dist == infi:  # vertex is unreachable or self
             return -1
         curr_vertex = params.world_graph.get_vertex(dist.index(curr_vertex_dist))
-        if curr_vertex.has_population():  # Found good vertex
+        if (agent_type == params.AGENT_TYPE_STUPID) and (curr_vertex.has_population()): #Found good vertex for stupid greedy
+            return dist.index(curr_vertex_dist)
+        if (agent_type == params.AGENT_TYPE_SABOTEUR) and (curr_vertex.brittle_not_broken()): #Found good vertex for saboteur
             return dist.index(curr_vertex_dist)
         new_dist.remove(curr_vertex_dist)
     return -1

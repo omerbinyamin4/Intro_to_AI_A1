@@ -47,11 +47,11 @@ def init_agents(agents_list, agent_type):
         return
     for pos in agents_list:
         check_pos_in_range(int(pos))
-        if agent_type == "human":
+        if agent_type == params.AGENT_TYPE_HUMAN:
             params.agents_list.append(Human(int(pos)))
-        elif agent_type == "stupid_greedy":
+        elif agent_type == params.AGENT_TYPE_STUPID:
             params.agents_list.append(Stupid(int(pos)))
-        elif agent_type == "saboteur":
+        elif agent_type == params.AGENT_TYPE_SABOTEUR:
             params.agents_list.append(Saboteur(int(pos)))
         else:
             print("error: agent type {} not supported".format(agent_type))
@@ -75,9 +75,9 @@ def startup(input_env, debug_mode):
         .format(params.world_graph.num_vertices - 1)).split(',')
 
     #TODO : can an agent start in a brittle vertex?
-    init_agents(human_pos, "human")
-    init_agents(stupid_greedy_pos, "stupid_greedy")
-    init_agents(saboteur_pos, "saboteur")
+    init_agents(human_pos, params.AGENT_TYPE_HUMAN)
+    init_agents(stupid_greedy_pos, params.AGENT_TYPE_STUPID)
+    init_agents(saboteur_pos, params.AGENT_TYPE_SABOTEUR)
 
     simulate()
 
@@ -95,6 +95,7 @@ def simulate():
         for agent in params.agents_list:
             # If there is an agent still active - simulation should cont
             if agent.get_active_status():
+                agent.print_name()
                 params.should_simulate = True
                 break
         # TODO: improve cond to check if there are anymore people to be saved.

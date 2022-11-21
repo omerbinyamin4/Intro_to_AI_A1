@@ -1,4 +1,4 @@
-import params
+# import params
 
 
 class Vertex:
@@ -32,7 +32,7 @@ class Vertex:
         return self.population > 0
 
     def reset_population(self):
-        params.total_victims = params.total_victims - self.population
+        # params.total_victims = params.total_victims - self.population
         self.population = 0
 
     def check_is_brittle(self):
@@ -43,6 +43,9 @@ class Vertex:
 
     def check_if_broken(self):
         return self.is_broken
+
+    def brittle_not_broken(self):
+        return (self.is_brittle) and (not self.is_broken)
 
     def print_vertex(self):
         print("## Vertex properties: ##")
