@@ -1,4 +1,3 @@
-
 from components import *
 from graph import *
 from agents import *
@@ -8,11 +7,13 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 
 input_graphs = "./input_graphs"
 
+
 def print_agent_list():
     print("## Agents list: ##")
     for agent in params.agents_list:
         print(agent.get_name())
     print("## Finished agent list ##")
+
 
 def init_graph_from_file(input_env):
     input_file = open(input_env, 'r')
@@ -35,12 +36,14 @@ def init_graph_from_file(input_env):
         print("vert_dict.keys after init: {}\n".format(params.world_graph.get_vertices_keys()))
     input_file.close()
 
+
 def check_pos_in_range(pos):
     if ((pos < 0) or (pos > params.world_graph.num_vertices - 1)):
         print("### pos {} is not valid ###\n"
-        "possible positions are 0-{} or -1 for no agents\n"
-        "Existing...\n".format(pos, params.world_graph.num_vertices - 1))
+              "possible positions are 0-{} or -1 for no agents\n"
+              "Existing...\n".format(pos, params.world_graph.num_vertices - 1))
         exit(0)
+
 
 def init_agents(agents_list, agent_type):
     if int(agents_list[0]) == -1:
@@ -56,13 +59,15 @@ def init_agents(agents_list, agent_type):
         else:
             print("error: agent type {} not supported".format(agent_type))
 
+
 def startup(input_env, debug_mode):
     params.debug = debug_mode
     init_graph_from_file(input_env)
+    convert_world_to_shortest_paths_clique(params.world_graph)
     human_pos = input("enter start position for each human agent (i.e: 1,1,0)\n"
-                          "possible positions are 0-{}\n"
-                          "enter -1 for no human agents\n"
-                          .format(params.world_graph.num_vertices - 1)).split(',')
+                      "possible positions are 0-{}\n"
+                      "enter -1 for no human agents\n"
+                      .format(params.world_graph.num_vertices - 1)).split(',')
 
     stupid_greedy_pos = input("enter start position for each stupid greedy agent (i.e: 1,1,0)\n"
                               "possible position are 0-{}\n"
@@ -70,16 +75,17 @@ def startup(input_env, debug_mode):
                               .format(params.world_graph.num_vertices - 1)).split(',')
 
     saboteur_pos = input("enter start position for each saboteur agent (i.e: 1,1,0)\n"
-        "possible positions are 0-{}\n"
-        "enter -1 for no saboteur agents\n"
-        .format(params.world_graph.num_vertices - 1)).split(',')
+                         "possible positions are 0-{}\n"
+                         "enter -1 for no saboteur agents\n"
+                         .format(params.world_graph.num_vertices - 1)).split(',')
 
-    #TODO : can an agent start in a brittle vertex?
+    # TODO : can an agent start in a brittle vertex?
     init_agents(human_pos, params.AGENT_TYPE_HUMAN)
     init_agents(stupid_greedy_pos, params.AGENT_TYPE_STUPID)
     init_agents(saboteur_pos, params.AGENT_TYPE_SABOTEUR)
 
     simulate()
+
 
 def simulate():
     print("------------------ Simulation Started ------------------\n")
@@ -123,7 +129,6 @@ if __name__ == '__main__':
     )
     arg_parser.add_argument('-i', "--input_env", default="input.txt", help='Enter input environment')
     arg_parser.add_argument('-d', "--debug", action='store_true', help='Add this flag if you wish to be in debug mode')
-
 
     command_line_args = arg_parser.parse_args()
 

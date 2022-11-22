@@ -148,9 +148,11 @@ def min_dist_with_cond(dist, agent_type):
         if curr_vertex_dist == infi:  # vertex is unreachable or self
             return -1
         curr_vertex = params.world_graph.get_vertex(dist.index(curr_vertex_dist))
-        if (agent_type == params.AGENT_TYPE_STUPID) and (curr_vertex.has_population()): #Found good vertex for stupid greedy
+        if (agent_type == params.AGENT_TYPE_STUPID) and (
+        curr_vertex.has_population()):  # Found good vertex for stupid greedy
             return dist.index(curr_vertex_dist)
-        if (agent_type == params.AGENT_TYPE_SABOTEUR) and (curr_vertex.brittle_not_broken()): #Found good vertex for saboteur
+        if (agent_type == params.AGENT_TYPE_SABOTEUR) and (
+        curr_vertex.brittle_not_broken()):  # Found good vertex for saboteur
             return dist.index(curr_vertex_dist)
         new_dist.remove(curr_vertex_dist)
     return -1
@@ -166,3 +168,25 @@ def extract_next_vertex_in_path(path, src_vertex_index, dest_vertex_index):
         prev_vertex_index = next_vertex_index
         next_vertex_index = path[prev_vertex_index]
     return prev_vertex_index
+
+
+def convert_world_to_shortest_paths_clique(g):
+    clique = params.world_clique
+
+    # copy all vertices to new clique graph
+    for vertex in g.get_vertices_values():
+        clique.add_vertex(Vertex(vertex.id, vertex.population, False))
+
+    # add edges representing shortest path between all vertices in g
+    for vertex in g.get_vertices_values():
+        (dist, path) = dijkstra_dist(vertex)
+        for shortest_path in dist:
+            if dist.index(shortest_path) != vertex.id and shortest_path != infi:
+                g_dest_vertex = g.get_vertex(dist.index(shortest_path))
+                clique.add_edge(Vertex(vertex.id, vertex.population, False), Vertex(g_dest_vertex.id, g_dest_vertex.population, False), shortest_path)
+
+
+def calc_shortest_path_without_brittle(src_id, dest_id):
+    if src_id == dest_id:
+        return 0
+    return params.world_clique.get_vertex(src_id).get_weight(dest_id)

@@ -22,8 +22,10 @@ class Vertex:
     def get_id(self):
         return self.id
 
-    def get_weight(self, neighbor):
-        return self.adjacent[neighbor]
+    def get_weight(self, neighbor_id):
+        if neighbor_id in self.adjacent.keys():
+            return self.adjacent[neighbor_id]
+        return None
 
     def get_population(self):
         return self.population
@@ -78,16 +80,23 @@ class Graph:
             return None
 
     def add_edge(self, frm, to, cost=0):
-        if frm not in self.vert_dict:
+        if frm.id not in self.vert_dict.keys():
             self.add_vertex(frm)
-        if to not in self.vert_dict:
+        if to.id not in self.vert_dict.keys():
             self.add_vertex(to)
 
-        self.vert_dict[frm].add_neighbor(self.vert_dict[to], cost)
-        self.vert_dict[to].add_neighbor(self.vert_dict[frm], cost)
+        self.get_vertex(frm.id).add_neighbor(to.id, cost)
+        self.get_vertex(to.id).add_neighbor(frm.id, cost)
 
     def get_vertices_keys(self):
         return self.vert_dict.keys()
 
     def get_vertices_values(self):
         return self.vert_dict.values()
+
+    def print_graph_vertices(self):
+        print("## Graph vertices: ##\n---------------------------\n")
+        for vertex in self.get_vertices_values():
+            vertex.print_vertex()
+        print("---------------------------\n## end of graph vertices ##")
+

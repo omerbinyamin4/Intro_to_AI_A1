@@ -1,6 +1,7 @@
 from graph import Graph
 
 world_graph = Graph()
+world_clique = Graph()
 agents_list = []
 should_simulate = True
 debug = False
