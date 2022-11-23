@@ -1,3 +1,4 @@
+import utils
 from components import *
 from graph import *
 from agents import *
@@ -56,6 +57,8 @@ def init_agents(agents_list, agent_type):
             params.agents_list.append(Stupid(int(pos)))
         elif agent_type == params.AGENT_TYPE_SABOTEUR:
             params.agents_list.append(Saboteur(int(pos)))
+        elif agent_type == params.AGENT_TYPE_GREEDY_SEARCH:
+            params.agents_list.append(Greedy_search(int(pos)))
         else:
             print("error: agent type {} not supported".format(agent_type))
 
@@ -64,27 +67,36 @@ def startup(input_env, debug_mode):
     params.debug = debug_mode
     init_graph_from_file(input_env)
     convert_world_to_shortest_paths_clique(params.world_graph)
-    human_pos = input("enter start position for each human agent (i.e: 1,1,0)\n"
-                      "possible positions are 0-{}\n"
-                      "enter -1 for no human agents\n"
-                      .format(params.world_graph.num_vertices - 1)).split(',')
+    task = input("insert task number to run\n")
+    if int(task) == 1:
+        human_pos = input("enter start position for each human agent (i.e: 1,1,0)\n"
+                          "possible positions are 0-{}\n"
+                          "enter -1 for no human agents\n"
+                          .format(params.world_graph.num_vertices - 1)).split(',')
 
-    stupid_greedy_pos = input("enter start position for each stupid greedy agent (i.e: 1,1,0)\n"
-                              "possible position are 0-{}\n"
-                              "enter -1 for no stupid greedy agents\n"
-                              .format(params.world_graph.num_vertices - 1)).split(',')
+        stupid_greedy_pos = input("enter start position for each stupid greedy agent (i.e: 1,1,0)\n"
+                                  "possible position are 0-{}\n"
+                                  "enter -1 for no stupid greedy agents\n"
+                                  .format(params.world_graph.num_vertices - 1)).split(',')
 
-    saboteur_pos = input("enter start position for each saboteur agent (i.e: 1,1,0)\n"
-                         "possible positions are 0-{}\n"
-                         "enter -1 for no saboteur agents\n"
-                         .format(params.world_graph.num_vertices - 1)).split(',')
+        saboteur_pos = input("enter start position for each saboteur agent (i.e: 1,1,0)\n"
+                             "possible positions are 0-{}\n"
+                             "enter -1 for no saboteur agents\n"
+                             .format(params.world_graph.num_vertices - 1)).split(',')
+        # TODO : can an agent start in a brittle vertex?
+        init_agents(human_pos, params.AGENT_TYPE_HUMAN)
+        init_agents(stupid_greedy_pos, params.AGENT_TYPE_STUPID)
+        init_agents(saboteur_pos, params.AGENT_TYPE_SABOTEUR)
+        simulate()
+    elif int(task) == 2:
+        greedy_search_pos = input("enter start position for single greedy search agent\n"
+                                  "possible positions are 0-{}\n"
+                                  "enter -1 for no saboteur agents\n"
+                                  .format(params.world_graph.num_vertices - 1)).split(',')
 
-    # TODO : can an agent start in a brittle vertex?
-    init_agents(human_pos, params.AGENT_TYPE_HUMAN)
-    init_agents(stupid_greedy_pos, params.AGENT_TYPE_STUPID)
-    init_agents(saboteur_pos, params.AGENT_TYPE_SABOTEUR)
+        init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
 
-    simulate()
+        simulate_2()
 
 
 def simulate():
@@ -118,6 +130,19 @@ def simulate():
         # Should stupid greedy consider the fact a saboteur can break/broke a brittle vertix in its path?
         # if there are 2 greedy agents - should they check where the other agent is headed and go to a different place?
 
+    print("------------------ Simulation Ended ------------------\n")
+
+
+def simulate_2():
+    print("------------------ Simulation Started ------------------\n")
+    agent = params.agents_list.pop(0)
+    while params.should_simulate:
+        sol = agent.act()
+        if sol is not None and not params.should_simulate:
+            print("Solution Found :", sol)
+            print("\n")
+        elif not params.should_simulate:
+            print("No Solution was Found :(\n")
     print("------------------ Simulation Ended ------------------\n")
 
 

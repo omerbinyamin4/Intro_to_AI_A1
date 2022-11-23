@@ -30,8 +30,10 @@ class MinHeap:
     #         self.heap[i], self.heap[self.parent(i)] = (
     #             self.heap[self.parent(i)], self.heap[i])
 
-    # Method to remove minium element from min heap- return heap element with key and value
+    # Method to remove minimum element from min heap- return heap element with key and value
     def extract_min(self):
+        if len(self.heap) == 0:
+            return None
         (popped_key, popped_value) = heappop(self.heap)
         return HeapElement(popped_key, popped_value)
 

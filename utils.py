@@ -185,8 +185,3 @@ def convert_world_to_shortest_paths_clique(g):
                 g_dest_vertex = g.get_vertex(dist.index(shortest_path))
                 clique.add_edge(Vertex(vertex.id, vertex.population, False), Vertex(g_dest_vertex.id, g_dest_vertex.population, False), shortest_path)
 
-
-def calc_shortest_path_without_brittle(src_id, dest_id):
-    if src_id == dest_id:
-        return 0
-    return params.world_clique.get_vertex(src_id).get_weight(dest_id)

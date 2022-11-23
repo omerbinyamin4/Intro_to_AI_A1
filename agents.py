@@ -1,4 +1,5 @@
 import params
+import utils
 from utils import *
 from components.minHeap import MinHeap, HeapElement
 
@@ -144,8 +145,7 @@ class Saboteur(Agent):
             v.adjacent.pop(dest)
 
         # change state
-        curr_action_score = calc_score(0, path, self.pos, dest)
-        self.score += curr_action_score
+        self.calc_score(0, path, self.pos, dest)
         # change pos of agent to dest node
         self.pos = dest
 
@@ -156,26 +156,35 @@ def goal_test():
     return params.total_victims == 0
 
 
+def h_func(src_id, dest_id):
+    if src_id == dest_id:
+        return 0
+    return params.world_clique.get_vertex(src_id).get_weight(dest_id)
+
+
 class Greedy_search(Agent):
-    def __init__(self, pos, h_func):
+    def __init__(self, pos):
         super().__init__(pos)
         self.name = "greedy stupid"
         self.fringe = MinHeap()
-        self.h_func = h_func
         # initialize fringe to start point
-        self.fringe.insert_element(HeapElement(h_func(pos), pos))
+        self.fringe.insert_element(HeapElement(h_func(pos, pos), pos))
 
     def act(self):
         if self.fringe.is_empty():
-            self.active = False
+            params.should_simulate = False
             # TODO: should return none and simulator terminate? or should also change agent state to terminate?
-            # return None
+            return None
 
-        curr_vertex_id = self.fringe.extractMin().value
+        curr_vertex_id = self.fringe.extract_min().value
 
         # ignore brittle broken (already visited vertices)
         while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
-            curr_vertex_id = self.fringe.extractMin().value
+            if self.fringe.is_empty():
+                params.should_simulate = False
+                # TODO: should return none and simulator terminate? or should also change agent state to terminate?
+                return None
+            curr_vertex_id = self.fringe.extract_min().value
 
         curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
         # rescue people and update env
@@ -183,6 +192,7 @@ class Greedy_search(Agent):
         if curr_vertex.check_is_brittle():
             curr_vertex.break_ver()
         if goal_test():
+            params.should_simulate = False
             return generate_solution(curr_vertex_id)
 
         self.expand_and_insert_to_fringe(curr_vertex_id)
@@ -191,8 +201,8 @@ class Greedy_search(Agent):
         graph_vertex = params.world_graph.get_vertex(vertex_id)
         if graph_vertex is not None:
             for neighbor in graph_vertex.adjacent.keys():
-                neighbor.solution_parent = graph_vertex.id
-                self.fringe.insert_element(HeapElement(self.h_func(neighbor), neighbor))
+                params.world_graph.get_vertex(neighbor).solution_parent = graph_vertex.id
+                self.fringe.insert_element(HeapElement(h_func(neighbor, vertex_id), neighbor))
 
 
 class A_star_search(Agent):
@@ -211,11 +221,11 @@ class A_star_search(Agent):
             # TODO: should return none and simulator terminate? or should also change agent state to terminate?
             # return None
 
-        curr_vertex_id = self.fringe.extractMin().value
+        curr_vertex_id = self.fringe.extract_min().value
 
         # ignore brittle broken (already visited vertices)
         while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
-            curr_vertex_id = self.fringe.extractMin().value
+            curr_vertex_id = self.fringe.extract_min().value
 
         curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
         # rescue people and update env
@@ -259,11 +269,11 @@ class realtime_A_star_search(Agent):
             # TODO: should return none and simulator terminate? or should also change agent state to terminate?
             # return None
 
-        curr_vertex_id = self.fringe.extractMin().value
+        curr_vertex_id = self.fringe.extract_min().value
 
         # ignore brittle broken (already visited vertices)
         while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
-            curr_vertex_id = self.fringe.extractMin().value
+            curr_vertex_id = self.fringe.extract_min().value
 
         curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
         # rescue people and update env
