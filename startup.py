@@ -62,7 +62,6 @@ def init_agents(agents_list, agent_type):
 def startup(input_env, debug_mode):
     params.debug = debug_mode
     init_graph_from_file(input_env)
-    convert_world_to_shortest_paths_clique(params.world_graph)
     task = input("Insert task number to run:\n")
     if int(task) == 1:
         human_pos = input("enter start position for each human agent (i.e: 1,1,0)\n"
@@ -85,14 +84,17 @@ def startup(input_env, debug_mode):
         init_agents(saboteur_pos, params.AGENT_TYPE_SABOTEUR)
         simulate()
     elif int(task) == 2:
-        greedy_search_pos = input("enter start position for single greedy search agent\n"
-                                  "possible positions are 0-{}\n"
-                                  "enter -1 for no saboteur agents\n"
-                                  .format(params.world_graph.num_vertices - 1)).split(',')
-
-        init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
-
-        simulate_2()
+        # greedy_search_pos = input("enter start position for single greedy search agent\n"
+        #                           "possible positions are 0-{}\n"
+        #                           "enter -1 for no saboteur agents\n"
+        #                           .format(params.world_graph.num_vertices - 1)).split(',')
+        #
+        # init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
+        #
+        # simulate_2()
+        clique = get_shortest_path_clique(0, [1, 3, 4], [])
+        clique.print_graph_vertices()
+        print(get_mst_sum(clique))
     else:
         print("Error: inserted non existing task number: {}".format(int(task)))
 

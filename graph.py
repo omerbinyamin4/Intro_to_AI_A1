@@ -10,6 +10,15 @@ class Vertex:
         self.is_broken = False
         self.solution_parent = None
 
+    def copy_vertex(self, vertex, optional_exclude_id_list):
+        self.id = vertex.get_id()
+        self.population = vertex.get_population()
+        self.is_brittle = vertex.check_is_brittle()
+        self.is_broken = vertex.is_broken
+        for key in vertex.adjacent.keys():
+            if key not in optional_exclude_id_list:
+                self.adjacent[key] = vertex.adjacent[key]
+
     def add_neighbor(self, neighbor, weight=0):
         self.adjacent[neighbor] = weight
 
@@ -54,10 +63,18 @@ class Vertex:
         if self.is_brittle:
             print("\tbroken: " + str(self.is_broken))
 
+
 class Graph:
     def __init__(self):
         self.vert_dict = {}
         self.num_vertices = 0
+
+    def copy_graph(self, g, optional_exclude_id_list):
+        self.num_vertices = g.num_vertices
+        for key in g.get_vertices_keys():
+            new_vertex = Vertex(0, 0, False)  # garbage values that will be overridden in copy_vertex
+            new_vertex.copy_vertex(g.get_vertex(key), optional_exclude_id_list)
+            self.vert_dict[key] = new_vertex
 
     def __iter__(self):
         return iter(self.vert_dict.values())
@@ -92,4 +109,3 @@ class Graph:
         for vertex in self.get_vertices_values():
             vertex.print_vertex()
         print("---------------------------\n## end of graph vertices ##")
-

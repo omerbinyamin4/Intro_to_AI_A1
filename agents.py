@@ -120,7 +120,7 @@ class Stupid(Agent):
         if not self.get_active_status():
             return "no-op"
         # calculate all paths
-        (dist, path) = dijkstra_dist(src_vertex)
+        (dist, path) = dijkstra_dist(src_vertex, params.world_graph)
 
         # pick vertex which has the shortest path from agent pos which has population
         dest_vertex_index = min_dist_with_cond(dist, params.AGENT_TYPE_STUPID)
@@ -158,7 +158,7 @@ class Saboteur(Agent):
         if not self.get_active_status():
             return "no-op"
 
-        (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos))
+        (dist, path) = dijkstra_dist(params.world_graph.get_vertex(self.pos), params.world_graph)
 
         # pick vertex which has the shortest path from agent pos which is brittle and not broken
         dest_vertex_index = min_dist_with_cond(dist, params.AGENT_TYPE_SABOTEUR)
