@@ -28,19 +28,14 @@ def line_to_edge(line):
     dest = params.world_graph.get_vertex(int(line[2]))
     source.add_neighbor(dest.id, int(line[3].split('W')[1]))
     dest.add_neighbor(source.id, int(line[3].split('W')[1]))
-    if params.debug:
-        print("source vertex with id: {} now have adjacent list: {}".format(source.get_id(), source.get_connections()))
-        print("dest vertex with id: {} now have adjacent list: {}\n".format(dest.get_id(), dest.get_connections()))
-
 
 def print_world_state():
-    # TODO: refactor to print actual desired state
-    print("## WORLD STATE ##\n")
+    print("###### WORLD STATE ######\n")
     for vertex in params.world_graph.vert_dict:
         params.world_graph.get_vertex(vertex).print_vertex()
     for agent in params.agents_list:
         agent.print_agent()
-    print("## FINISHED WORLD STATE ##\n")
+    print("###### FINISHED WORLD STATE ######\n")
 
 
 # Dijkstra shortest path implementation

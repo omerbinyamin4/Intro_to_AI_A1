@@ -125,7 +125,7 @@ def simulate_2():
     agent = params.agents_list.pop(0)
     while params.should_simulate:
         sol = agent.act()
-        if sol is not None and not params.should_simulate:
+        if (sol is not None) and (not params.should_simulate):
             print("Solution Found :", sol)
             print("\n")
         elif not params.should_simulate:

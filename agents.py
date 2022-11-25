@@ -38,8 +38,8 @@ class Agent:
     def get_name(self):
         return self.name
 
-    def update_env(self, curr_dest_vertex, dest_vertex_index):
-        if curr_dest_vertex.get_id() == dest_vertex_index:  # vertex we are traveling to has population
+    def update_env(self, curr_dest_vertex):
+        if (self.type == params.AGENT_TYPE_HUMAN) or (self.type == params.AGENT_TYPE_STUPID):
             curr_dest_vertex.reset_population()
         if curr_dest_vertex.check_is_brittle():
             curr_dest_vertex.break_ver()
@@ -58,7 +58,7 @@ class Agent:
         time_taken = src_vertex.get_weight(dest_vertex.get_id())
         score = 0
 
-        if self.type == params.AGENT_TYPE_STUPID:
+        if (self.type == params.AGENT_TYPE_STUPID) or (self.type == params.AGENT_TYPE_HUMAN):
             score = (dest_vertex.get_population() * 1000) - time_taken
         elif self.type == params.AGENT_TYPE_SABOTEUR:
             score -= time_taken
@@ -74,10 +74,9 @@ class Agent:
         return
 
     def print_agent(self):
-        print("## {} properties: ##".format(self.name))
-        print("Agent position is: " + str(self.pos))
-        print("Agent score is: " + str(self.score))
-        print("## finished agent ##\n")
+        print(self.name + ":")
+        print("\tAgent position is: " + str(self.pos))
+        print("\tAgent score is: " + str(self.score) + "\n")
 
     def update_full_path(self, next_vertex_idx):
         self.full_path += "->{}".format(str(next_vertex_idx))
@@ -87,11 +86,26 @@ class Human(Agent):
         super().__init__(pos)
         self.name = "human {}".format(params.human_id)
         params.human_id = params.human_id + 1
+        self.type = params.AGENT_TYPE_HUMAN
 
     def act(self):
-        print("human acted\n")
-        self.agent_terminate()
+        print("{} started acting\n".format(self.get_name()))
+        src_vertex = params.world_graph.get_vertex(self.pos)
+        curr_dest_vertex_index = int(input("enter next vertex to move to, or -1 to terminate\n"))
+        if curr_dest_vertex_index == -1:
+            self.agent_terminate()
+            return
+        
+        curr_dest_vertex = params.world_graph.get_vertex(curr_dest_vertex_index)
+        self.calc_score(src_vertex, curr_dest_vertex)
+        self.update_env(curr_dest_vertex)
+        self.update_full_path(curr_dest_vertex_index)
 
+        if params.debug:
+            print("{} full path is: {}".format(self.name ,self.full_path))
+
+        self.pos = curr_dest_vertex_index
+        print("{} finished acting\n".format(self.get_name()))
 
 class Stupid(Agent):
     def __init__(self, pos):
@@ -101,9 +115,6 @@ class Stupid(Agent):
         self.type = params.AGENT_TYPE_STUPID
 
     def act(self):
-        # TODO: ambiguity: should an agent make the changes in the environment by himself or return the changes that
-        #  should be done and the simulator will perform them?
-
         print("{} started acting\n".format(self.get_name()))
         src_vertex = params.world_graph.get_vertex(self.pos)
         if not self.get_active_status():
@@ -125,7 +136,7 @@ class Stupid(Agent):
                                                                                          curr_dest_vertex_index))
 
         self.calc_score(src_vertex, curr_dest_vertex)
-        self.update_env(curr_dest_vertex, dest_vertex_index)
+        self.update_env(curr_dest_vertex)
         self.update_full_path(curr_dest_vertex_index)
         if params.debug:
             print("{} full path is: {}".format(self.name ,self.full_path))
@@ -164,7 +175,7 @@ class Saboteur(Agent):
                                                                                          curr_dest_vertex_index))
 
         self.calc_score(src_vertex, curr_dest_vertex)
-        self.update_env(curr_dest_vertex, dest_vertex_index)
+        self.update_env(curr_dest_vertex)
         self.update_full_path(curr_dest_vertex_index)
         if params.debug:
             print("{} full path is: {}".format(self.name ,self.full_path))
@@ -192,8 +203,10 @@ class Greedy_search(Agent):
         self.fringe = MinHeap()
         # initialize fringe to start point
         self.fringe.insert_element(HeapElement(h_func(pos, pos), pos))
+        self.type == params.AGENT_TYPE_GREEDY_SEARCH
 
     def act(self):
+        print("{} started acting\n".format(self.get_name()))
         if self.fringe.is_empty():
             params.should_simulate = False
             # TODO: should return none and simulator terminate? or should also change agent state to terminate?

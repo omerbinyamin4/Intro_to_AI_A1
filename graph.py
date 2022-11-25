@@ -10,9 +10,6 @@ class Vertex:
         self.is_broken = False
         self.solution_parent = None
 
-    # def __str__(self):
-    #     return str(self.id) + ' adjacent: ' + str([x.id for x in self.adjacent])
-
     def add_neighbor(self, neighbor, weight=0):
         self.adjacent[neighbor] = weight
 
@@ -50,16 +47,12 @@ class Vertex:
         return (self.is_brittle) and (not self.is_broken)
 
     def print_vertex(self):
-        print("## Vertex properties: ##")
-        print("id: " + str(self.id))
-        print("adjacent:")
-        print(self.adjacent)
-        print("population: " + str(self.population))
-        print("brittle: " + str(self.is_brittle))
+        print("Vertex {}:".format(str(self.id)))
+        print("\tadjacent: {}".format(self.adjacent))
+        print("\tpopulation: " + str(self.population))
+        print("\tbrittle: " + str(self.is_brittle))
         if self.is_brittle:
-            print("broken: " + str(self.is_broken))
-        print("## Finished vertex ##\n")
-
+            print("\tbroken: " + str(self.is_broken))
 
 class Graph:
     def __init__(self):
