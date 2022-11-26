@@ -1,7 +1,7 @@
 from graph import *
 import params
 import sys
-from components.minHeap import MinHeap, HeapElement
+from minHeap import MinHeap, HeapElement
 
 infi = sys.maxsize
 

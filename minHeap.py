@@ -1,4 +1,6 @@
 from heapq import heappush, heappop, heapify
+from graph import *
+from params import *
 
 
 # heappop - pop and return the smallest element from heap
@@ -59,3 +61,20 @@ class HeapElement:
     def __init__(self, key, value):
         self.key = key
         self.value = value
+
+class Search_tree_node:
+    def __init__(self, id, parent, broken_list, population_list, g, h):
+        self.id = id
+        self.parent = parent #todo figure out how to add parent
+        self.broken_nodes = broken_list
+        self.nodes_with_population = population_list
+        self.g = g # Cost so far to reach current node
+        self.h = h # Estimated cost to goal from current node
+
+    def print_search_tree_node(self):
+        print("search_tree_node: " + str(self.id))
+        print("\tparent: " + str(self.parent))
+        print("\tbroken nodes: {}".format(self.broken_nodes))
+        print("\tnodes_with_population: {}".format(self.nodes_with_population))
+        print("\tg: " + str(self.g))
+        print("\th: " + str(self.h))

@@ -110,3 +110,7 @@ class Graph:
         for vertex in self.get_vertices_values():
             vertex.print_vertex()
         print("---------------------------\n## end of graph vertices ##")
+
+    def get_num_of_vertices(self):
+        return self.num_vertices
+

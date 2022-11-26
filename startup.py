@@ -15,6 +15,11 @@ def print_agent_list():
         print(agent.get_name())
     print("## Finished agent list ##\n")
 
+def h_func(pos):
+    if pos == 0:
+        return 5
+    else:
+        return 9
 
 def init_graph_from_file(input_env):
     input_file = open(input_env, 'r')
@@ -54,7 +59,11 @@ def init_agents(agents_list, agent_type):
         elif agent_type == params.AGENT_TYPE_SABOTEUR:
             params.agents_list.append(Saboteur(int(pos)))
         elif agent_type == params.AGENT_TYPE_GREEDY_SEARCH:
-            params.agents_list.append(Greedy_search(int(pos)))
+            params.agents_list.append(Greedy_search(int(pos), h_func))
+        elif agent_type == params.AGENT_TYPE_A_STAR_SEARCH:
+            params.agents_list.append(A_star_search(int(pos), h_func))
+        elif agent_type == params.AGENT_TYPE_REALTIME_A_STAR_SEARCH:
+            params.agents_list.append(realtime_A_star_search(int(pos), h_func))
         else:
             params.agent_type_doesnt_exist(agent_type)
 
@@ -88,13 +97,23 @@ def startup(input_env, debug_mode):
         #                           "possible positions are 0-{}\n"
         #                           "enter -1 for no saboteur agents\n"
         #                           .format(params.world_graph.num_vertices - 1)).split(',')
-        #
-        # init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
-        #
-        # simulate_2()
         clique = get_shortest_path_clique(0, [1, 3], [2])
         clique.print_graph_vertices()
         print(get_mst_sum(clique))
+        a_star_search_pos = input("enter start position for single a_star search agent\n"
+                                  "possible positions are 0-{}\n"
+                                  "enter -1 for no a_star search agents\n"
+                                  .format(params.world_graph.num_vertices - 1)).split(',')
+        # realtime_a_star_search_pos = input("enter start position for single realtime a _star search agent\n"
+        #                           "possible positions are 0-{}\n"
+        #                           "enter -1 for no realtime a_star search agents\n"
+        #                           .format(params.world_graph.num_vertices - 1)).split(',')
+        # init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
+        init_agents(a_star_search_pos, params.AGENT_TYPE_A_STAR_SEARCH)
+        # init_agents(realtime_a_star_search_pos, params.AGENT_TYPE_REALTIME_A_STAR_SEARCH)
+
+
+        simulate_2()
     else:
         print("Error: inserted non existing task number: {}".format(int(task)))
 
@@ -124,6 +143,9 @@ def simulate():
 
 def simulate_2():
     print("------------------ Simulation Started ------------------\n")
+    if params.debug:
+        print_agent_list()
+        print_world_state()
     agent = params.agents_list.pop(0)
     while params.should_simulate:
         sol = agent.act()
