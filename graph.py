@@ -15,9 +15,10 @@ class Vertex:
         self.population = vertex.get_population()
         self.is_brittle = vertex.check_is_brittle()
         self.is_broken = vertex.is_broken
-        for key in vertex.adjacent.keys():
-            if key not in optional_exclude_id_list:
-                self.adjacent[key] = vertex.adjacent[key]
+        if vertex.id not in optional_exclude_id_list:
+            for key in vertex.adjacent.keys():
+                if key not in optional_exclude_id_list:
+                    self.adjacent[key] = vertex.adjacent[key]
 
     def add_neighbor(self, neighbor, weight=0):
         self.adjacent[neighbor] = weight

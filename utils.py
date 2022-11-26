@@ -173,24 +173,6 @@ def extract_next_vertex_in_path(path, src_vertex_index, dest_vertex_index):
     return prev_vertex_index
 
 
-# deprecated
-# def convert_world_to_shortest_paths_clique(g):
-#     clique = params.world_clique
-#
-#     # copy all vertices to new clique graph
-#     for vertex in g.get_vertices_values():
-#         clique.add_vertex(Vertex(vertex.id, vertex.population, False))
-#
-#     # add edges representing shortest path between all vertices in g
-#     for vertex in g.get_vertices_values():
-#         (dist, path) = dijkstra_dist(vertex, params.world_graph)
-#         for shortest_path in dist:
-#             if dist.index(shortest_path) != vertex.id and shortest_path != infi:
-#                 g_dest_vertex = g.get_vertex(dist.index(shortest_path))
-#                 clique.add_edge(Vertex(vertex.id, vertex.population, False),
-#                                 Vertex(g_dest_vertex.id, g_dest_vertex.population, False), shortest_path)
-
-
 def get_shortest_path_clique(src, populated_vertices_id_list, broken_vertices_id_list):
     world_graph_copy = Graph()
     world_graph_copy.copy_graph(params.world_graph, broken_vertices_id_list)
@@ -199,8 +181,9 @@ def get_shortest_path_clique(src, populated_vertices_id_list, broken_vertices_id
     clique.add_vertex(
         Vertex(src, params.world_graph.get_vertex(src).get_population, params.world_graph.get_vertex(src).is_brittle))
     for v_id in populated_vertices_id_list:
-        clique.add_vertex(Vertex(v_id, params.world_graph.get_vertex(v_id).get_population,
-                                 params.world_graph.get_vertex(v_id).is_brittle))
+        if v_id not in clique.get_vertices_keys():
+            clique.add_vertex(Vertex(v_id, params.world_graph.get_vertex(v_id).get_population,
+                                    params.world_graph.get_vertex(v_id).is_brittle))
     # add all edges to the new clique
     for vertex in clique.get_vertices_values():
         (dist, path) = dijkstra_dist(world_graph_copy.get_vertex(vertex.id), world_graph_copy)
@@ -226,6 +209,11 @@ def min_key_for_prim(g, key, mst_set):
 def get_mst_sum(g):
     key = {}
     mst_set = {}
+
+    # test if g is a clique, meaning there is a path to all populated vertices
+    for vertex in g.get_vertices_values():
+        if len(vertex.adjacent.keys()) < g.num_vertices - 1:
+            return infi
 
     for vertex_id in g.get_vertices_keys():
         key[vertex_id] = infi

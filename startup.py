@@ -92,7 +92,7 @@ def startup(input_env, debug_mode):
         # init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
         #
         # simulate_2()
-        clique = get_shortest_path_clique(0, [1, 3, 4], [])
+        clique = get_shortest_path_clique(0, [1, 3], [2])
         clique.print_graph_vertices()
         print(get_mst_sum(clique))
     else:
