@@ -179,10 +179,10 @@ def get_shortest_path_clique(src, populated_vertices_id_list, broken_vertices_id
     clique = Graph()
     # add all vertices to the new clique
     clique.add_vertex(
-        Vertex(src, params.world_graph.get_vertex(src).get_population, params.world_graph.get_vertex(src).is_brittle))
+        Vertex(src, params.world_graph.get_vertex(src).get_population(), params.world_graph.get_vertex(src).is_brittle))
     for v_id in populated_vertices_id_list:
         if v_id not in clique.get_vertices_keys():
-            clique.add_vertex(Vertex(v_id, params.world_graph.get_vertex(v_id).get_population,
+            clique.add_vertex(Vertex(v_id, params.world_graph.get_vertex(v_id).get_population(),
                                     params.world_graph.get_vertex(v_id).is_brittle))
     # add all edges to the new clique
     for vertex in clique.get_vertices_values():

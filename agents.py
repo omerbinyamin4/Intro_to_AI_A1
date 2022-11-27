@@ -21,11 +21,12 @@ class Agent:
         self.score = 0
         self.full_path = str(pos)
         self.type = -1
-        self.broken_list = [False for i in range(params.world_graph.get_num_of_vertices())]
-        self.population_list = [0 for i in range(params.world_graph.get_num_of_vertices())]
+        self.broken_list = []
+        self.population_list = []
         for vertex_id in range(params.world_graph.get_num_of_vertices()):
             vertex = params.world_graph.get_vertex(vertex_id)
-            self.population_list[vertex_id] = vertex.get_population()
+            if vertex.has_population():
+                self.population_list.append(vertex_id)
 
     def get_active_status(self):
         return self.active
@@ -53,7 +54,7 @@ class Agent:
         return self.name
 
     def update_env(self, curr_dest_vertex):
-        if self.is_saviour():
+        if self.is_saviour() and curr_dest_vertex.has_population():
             curr_dest_vertex.reset_population()
             self.update_population_list(curr_dest_vertex.get_id())
         if curr_dest_vertex.check_is_brittle():
@@ -120,11 +121,12 @@ class Agent:
 
     def update_broken_list(self, vertex_id):
         vertex = params.world_graph.get_vertex(vertex_id)
-        if vertex.check_is_brittle():
-            self.broken_list[vertex_id] = True
+        if vertex.check_is_brittle() and vertex_id not in self.broken_list:
+            self.broken_list.append(vertex_id) 
 
     def update_population_list(self, vertex_id):
-        self.population_list[vertex_id] = 0
+        if vertex_id not in self.population_list:
+            self.population_list.append(vertex_id)
 
 class Human(Agent):
     def __init__(self, pos):
@@ -235,12 +237,6 @@ def goal_test():
     return params.total_victims == 0
 
 
-def h_func(src_id, dest_id):
-    if src_id == dest_id:
-        return 0
-    return params.world_clique.get_vertex(src_id).get_weight(dest_id)
-
-
 class Greedy_search(Agent):
     def __init__(self, pos):
         super().__init__(pos)
@@ -300,7 +296,7 @@ class A_star_search(Agent):
     def __init__(self, pos, h_func):
         super().__init__(pos)
         self.open = MinHeap()
-        self.closed = MinHeap()
+        self.close = []
         self.h_func = h_func
         self.num_of_expands = 0
         self.name = "A_star search"
@@ -312,10 +308,13 @@ class A_star_search(Agent):
         self.update_env(init_vertex)
 
         # initialize fringe to start point
-        h_func_calc = self.h_func(pos)
+        h_func_calc = self.h_func(get_shortest_path_clique(self.pos, self.population_list, self.broken_list))
         first_node = Search_tree_node(pos, None, self.broken_list, self.population_list, 0, h_func_calc)
-        first_heap_element = HeapElement(10, first_node)
+        first_heap_element = HeapElement(h_func_calc, first_node)
         self.open.insert_element(first_heap_element)
+    
+    def add_to_close(self, vertex_id, g, h):
+        self.close.append({"id": vertex_id, "f": g + h})
 
     def act(self):
         print("{} started acting\n".format(self.get_name()))
@@ -329,11 +328,11 @@ class A_star_search(Agent):
         curr_heap_element = self.open.extract_min()
         curr_node = curr_heap_element.value
         curr_node.print_search_tree_node()
-        exit(0)
+        self.add_to_close(curr_node.id, curr_node.g, curr_node.h)
 
         # ignore brittle broken (already visited vertices)
         while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
-            curr_vertex_id = self.fringe.extract_min().value
+            curr_vertex_id = self.open.extract_min().value
 
         curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
         # rescue people and update env
