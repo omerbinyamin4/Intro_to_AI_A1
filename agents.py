@@ -246,15 +246,18 @@ class Greedy_search(Agent):
         super().__init__(pos)
         self.name = "greedy stupid"
         self.fringe = MinHeap()
-        # initialize fringe to start point
-        self.fringe.insert_element(HeapElement(h_func(pos, pos), pos))
         self.type == params.AGENT_TYPE_GREEDY_SEARCH
+
+        # initialize fringe to start point
+        h_func_calc = self.h_func(pos)
+        first_node = Search_tree_node(pos, None, self.broken_list, self.population_list, 0, h_func_calc)
+        first_heap_element = HeapElement(10, first_node)
+        self.fringe.insert_element(first_heap_element)
 
     def act(self):
         print("{} started acting\n".format(self.get_name()))
         if self.fringe.is_empty():
             params.should_simulate = False
-            # TODO: should return none and simulator terminate? or should also change agent state to terminate?
             return None
 
         curr_vertex_id = self.fringe.extract_min().value
@@ -263,7 +266,6 @@ class Greedy_search(Agent):
         while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
             if self.fringe.is_empty():
                 params.should_simulate = False
-                # TODO: should return none and simulator terminate? or should also change agent state to terminate?
                 return None
             curr_vertex_id = self.fringe.extract_min().value
 
@@ -283,7 +285,15 @@ class Greedy_search(Agent):
         if graph_vertex is not None:
             for neighbor in graph_vertex.adjacent.keys():
                 params.world_graph.get_vertex(neighbor).solution_parent = graph_vertex.id
-                self.fringe.insert_element(HeapElement(h_func(neighbor, vertex_id), neighbor))
+                neighbor_h_func_calc = self.h_func(neighbor)
+                neighbor_broken_list = self.broken_list[:]
+                if graph_vertex.check_if_broken():
+                    neighbor_broken_list.append(graph_vertex.id)
+                neighbor_population_list = self.population_list[:]
+                if graph_vertex.has_population():
+                    neighbor_population_list.remove(graph_vertex.id)
+                neighbor_node = Search_tree_node(neighbor, None, neighbor_broken_list, neighbor_population_list, 0, neighbor_h_func_calc)
+                self.fringe.insert_element(HeapElement(neighbor_h_func_calc, neighbor_node))
 
 
 class A_star_search(Agent):
@@ -333,6 +343,16 @@ class A_star_search(Agent):
         if goal_test():
             return generate_solution(curr_vertex_id)
 
+        # node = current
+        # node' = closed.pop(node.id)
+        # if node' != None
+            # if f(node) < f(node')
+                # closed.add(node)
+            # else
+                # closed.add(node')
+        # else (node' = None)
+            #closed.add(node)
+            #expand(node)
         if not self.closed.contains(HeapElement(self.h(curr_vertex_id), curr_vertex_id)):
             self.closed.insert_element(HeapElement(self.h(curr_vertex_id), curr_vertex_id))
             # TODO: what if an element with same value but diff key (h(value)) exists in closed?
