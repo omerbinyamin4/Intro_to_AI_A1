@@ -2,25 +2,29 @@ import params
 from utils import *
 from minHeap import *
 
+def calc_sum_of_people_saved(visited_vertex_id_list):
+    sum_of_people_saved = 0
+    for visited_vertex_id in visited_vertex_id_list:
+        sum_of_people_saved += get_vertex_from_id(visited_vertex_id).get_population()
+    return sum_of_people_saved
 
-def generate_solution(last_vertex_id):
-    solution = []
-    curr_sol_vertex = params.world_graph.get_vertex(last_vertex_id)
-    while curr_sol_vertex.path_parent is not None:
-        solution.append(curr_sol_vertex.path_parent)
-        curr_sol_vertex = params.world_graph.get_vertex(curr_sol_vertex.path_parent)
-    return solution
-
+def generate_solution(node):
+    solution_path = [node.id]
+    while node.parent is not None:
+        solution_path.insert(0,node.parent.id)
+        node = node.parent
+    people_saved = calc_sum_of_people_saved(solution_path)
+    return (solution_path, people_saved)
 
 class Agent:
-    def __init__(self, pos):
+    def __init__(self, pos, agent_type):
         self.pos = pos
         self.score = 0
         self.active = True
         self.name = ""
         self.score = 0
         self.full_path = str(pos)
-        self.type = -1
+        self.type = agent_type
         self.broken_list = []
         self.population_list = []
         for vertex_id in range(params.world_graph.get_num_of_vertices()):
@@ -56,10 +60,10 @@ class Agent:
     def update_env(self, curr_dest_vertex):
         if self.is_saviour() and curr_dest_vertex.has_population():
             curr_dest_vertex.reset_population()
-            self.update_population_list(curr_dest_vertex.get_id())
+            self.add_to_population_list(curr_dest_vertex.get_id())
         if curr_dest_vertex.check_is_brittle():
             curr_dest_vertex.break_ver()
-            self.update_broken_list(curr_dest_vertex.get_id())
+            self.add_to_broken_list(curr_dest_vertex.get_id())
 
     def update_score(self, add_score):
         self.score += add_score
@@ -114,26 +118,37 @@ class Agent:
     def print_agent(self):
         print(self.name + ":")
         print("\tAgent position is: " + str(self.pos))
-        print("\tAgent score is: " + str(self.score) + "\n")
+        print("\tAgent score is: " + str(self.score))
 
     def update_full_path(self, next_vertex_idx):
         self.full_path += "->{}".format(str(next_vertex_idx))
 
-    def update_broken_list(self, vertex_id):
+    def add_to_broken_list(self, vertex_id, broken_list):
         vertex = params.world_graph.get_vertex(vertex_id)
-        if vertex.check_is_brittle() and vertex_id not in self.broken_list:
-            self.broken_list.append(vertex_id) 
+        if vertex.check_is_brittle() and vertex_id not in broken_list:
+            broken_list.append(vertex_id) 
 
-    def update_population_list(self, vertex_id):
-        if vertex_id not in self.population_list:
-            self.population_list.append(vertex_id)
+    def add_to_population_list(self, vertex_id, pop_list):
+        if vertex_id not in pop_list:
+            pop_list.append(vertex_id)
+        else:
+            print_error_and_exit("Tried to add to population list already existing vertex_id")
+
+    def remove_from_population_list(self, vertex_id, pop_list):
+        if vertex_id in pop_list:
+            pop_list.remove(vertex_id)
+        else:
+            print_error_and_exit("Tried to remove from population list a non existing node")
 
 class Human(Agent):
     def __init__(self, pos):
-        super().__init__(pos)
+        super().__init__(pos, params.AGENT_TYPE_HUMAN)
         self.name = "human {}".format(params.human_id)
         params.human_id = params.human_id + 1
-        self.type = params.AGENT_TYPE_HUMAN
+
+        init_vertex = params.world_graph.get_vertex(self.pos)
+        self.calc_score_at_init(init_vertex)
+        self.update_env(init_vertex)
 
     def act(self):
         print("{} started acting\n".format(self.get_name()))
@@ -156,10 +171,13 @@ class Human(Agent):
 
 class Stupid(Agent):
     def __init__(self, pos):
-        super().__init__(pos)
+        super().__init__(pos, params.AGENT_TYPE_STUPID)
         self.name = "stupid {}".format(params.stupid_id)
         params.stupid_id += 1
-        self.type = params.AGENT_TYPE_STUPID
+
+        init_vertex = params.world_graph.get_vertex(self.pos)
+        self.calc_score_at_init(init_vertex)
+        self.update_env(init_vertex)
 
     def act(self):
         print("{} started acting\n".format(self.get_name()))
@@ -194,10 +212,13 @@ class Stupid(Agent):
 
 class Saboteur(Agent):
     def __init__(self, pos):
-        super().__init__(pos)
+        super().__init__(pos, params.AGENT_TYPE_SABOTEUR)
         self.name = "saboteur {}".format(params.saboteur_id)
         params.saboteur_id += 1
-        self.type = params.AGENT_TYPE_SABOTEUR
+
+        init_vertex = params.world_graph.get_vertex(self.pos)
+        self.calc_score_at_init(init_vertex)
+        self.update_env(init_vertex)
 
     def act(self):
         print("{} started acting\n".format(self.get_name()))
@@ -233,153 +254,178 @@ class Saboteur(Agent):
 
 # Search Agents (task #2)
 
-def goal_test():
-    return params.total_victims == 0
-
-
-class Greedy_search(Agent):
-    def __init__(self, pos):
-        super().__init__(pos)
-        self.name = "greedy stupid"
+class AI_Agent(Agent):
+    def __init__(self, pos, h_func, agent_type):
+        super().__init__(pos, agent_type)
         self.fringe = MinHeap()
-        self.type == params.AGENT_TYPE_GREEDY_SEARCH
-
-        # initialize fringe to start point
-        h_func_calc = self.h_func(pos)
-        first_node = Search_tree_node(pos, None, self.broken_list, self.population_list, 0, h_func_calc)
-        first_heap_element = HeapElement(10, first_node)
-        self.fringe.insert_element(first_heap_element)
-
-    def act(self):
-        print("{} started acting\n".format(self.get_name()))
-        if self.fringe.is_empty():
-            params.should_simulate = False
-            return None
-
-        curr_vertex_id = self.fringe.extract_min().value
-
-        # ignore brittle broken (already visited vertices)
-        while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
-            if self.fringe.is_empty():
-                params.should_simulate = False
-                return None
-            curr_vertex_id = self.fringe.extract_min().value
-
-        curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
-        # rescue people and update env
-        curr_vertex.reset_population()  # also reduces its population from total_victims
-        if curr_vertex.check_is_brittle():
-            curr_vertex.break_ver()
-        if goal_test():
-            params.should_simulate = False
-            return generate_solution(curr_vertex_id)
-
-        self.expand_and_insert_to_fringe(curr_vertex_id)
-
-    def expand_and_insert_to_fringe(self, vertex_id):
-        graph_vertex = params.world_graph.get_vertex(vertex_id)
-        if graph_vertex is not None:
-            for neighbor in graph_vertex.adjacent.keys():
-                params.world_graph.get_vertex(neighbor).solution_parent = graph_vertex.id
-                neighbor_h_func_calc = self.h_func(neighbor)
-                neighbor_broken_list = self.broken_list[:]
-                if graph_vertex.check_if_broken():
-                    neighbor_broken_list.append(graph_vertex.id)
-                neighbor_population_list = self.population_list[:]
-                if graph_vertex.has_population():
-                    neighbor_population_list.remove(graph_vertex.id)
-                neighbor_node = Search_tree_node(neighbor, None, neighbor_broken_list, neighbor_population_list, 0, neighbor_h_func_calc)
-                self.fringe.insert_element(HeapElement(neighbor_h_func_calc, neighbor_node))
-
-
-class A_star_search(Agent):
-    def __init__(self, pos, h_func):
-        super().__init__(pos)
-        self.open = MinHeap()
-        self.close = []
         self.h_func = h_func
         self.num_of_expands = 0
-        self.name = "A_star search"
-        self.type = params.AGENT_TYPE_A_STAR_SEARCH
-
-        # Update score and env
-        init_vertex = params.world_graph.get_vertex(self.pos)
-        self.calc_score_at_init(init_vertex)
-        self.update_env(init_vertex)
+        self.node_hash = 0
 
         # initialize fringe to start point
-        h_func_calc = self.h_func(get_shortest_path_clique(self.pos, self.population_list, self.broken_list))
-        first_node = Search_tree_node(pos, None, self.broken_list, self.population_list, 0, h_func_calc)
-        first_heap_element = HeapElement(h_func_calc, first_node)
-        self.open.insert_element(first_heap_element)
+        g_init = 0
+        first_node = self.create_node(pos, None, self.broken_list, self.population_list, g_init)
+        first_heap_element = HeapElement(self.calc_f(first_node), first_node)
+        self.fringe.insert_element(first_heap_element)
+
+    def all_people_saved(self, node_population_list):
+        return len(node_population_list) == 0
+    
+    def goal_test(self, node_population_list):
+        if self.all_people_saved(node_population_list):
+            return True
+        return False
+
+    def update_node_env(self, node_id, pop_list, broken_list):
+        vertex = get_vertex_from_id(node_id)
+        if vertex.has_population():
+            self.remove_from_population_list(node_id, pop_list)
+        if vertex.brittle_not_broken():
+            self.add_to_broken_list(node_id, broken_list)
+
+    def expand_and_insert_to_fringe(self, expanded_node):
+        graph_vertex = get_vertex_from_id(expanded_node.id)
+        if graph_vertex is not None:
+            neigbors_h_list = []
+            for neighbor_id in graph_vertex.adjacent.keys():
+                parent = expanded_node
+                neighbor_g = self.calc_new_g(expanded_node, neighbor_id)
+                neighbor_node = self.create_node(neighbor_id, parent, expanded_node.broken_nodes, expanded_node.nodes_with_population, neighbor_g)
+                neighbor_node.print_search_tree_node()
+                neighbor_f = self.calc_f(neighbor_node)
+                self.fringe.insert_element(HeapElement(neighbor_f, neighbor_node))
+                neigbors_h_list.append(neighbor_f - neighbor_g)
+            return neigbors_h_list
+        else:
+            print_error_and_exit("Given invalid vertex_id")
+
+    def calc_new_g(self, curr_node, next_node_id):
+        curr_vertex = get_vertex_from_id(curr_node.id)
+        edge_weight = curr_vertex.get_weight(next_node_id)
+        return curr_node.g + edge_weight
+
+    def create_node(self, id, parent, broken_list, population_list, g):
+        new_popluation_list = population_list.copy()
+        if id in new_popluation_list:
+            new_popluation_list.remove(id)
+        h_func_calc = self.h_func(get_shortest_path_clique(id, new_popluation_list, broken_list))
+        new_broken_list = broken_list.copy()
+        curr_vertex = get_vertex_from_id(id)
+        if curr_vertex.is_brittle and id not in new_broken_list:
+            new_broken_list.append(id)
+        new_node = Search_tree_node(id, parent, new_broken_list, new_popluation_list, g, h_func_calc, self.node_hash)
+        self.node_hash += 1
+        return new_node
+
+    def calc_f(self, node):
+        if self.type == params.AGENT_TYPE_GREEDY_SEARCH:
+            return node.h
+        if self.type == params.AGENT_TYPE_A_STAR_SEARCH:
+            return node.g + node.h
+        print_error_and_exit("agent type not supported: {}".format(self.type))
+
+class Greedy_search(AI_Agent):
+    def __init__(self, pos, h_func):
+        super().__init__(pos, h_func, params.AGENT_TYPE_GREEDY_SEARCH)
+        self.name = "greedy stupid"
+
+    def act(self):
+        while True:
+            print("--------- started iteration ------------")
+            # If fringe is empty, search agent failed and should return none
+            if self.fringe.is_empty():
+                return None
+
+            # Pop top node in fringe
+            curr_heap_element = self.fringe.extract_min()
+            curr_node = curr_heap_element.value
+            if params.debug:
+                print("---- curr_expanded_node")
+                curr_node.print_search_tree_node()
+                print("----")
+            
+            # If popped node has infi as heuristic function value, There is no solution
+            if curr_node.h == params.infi:
+                return None
+
+            # Check if goal_test is achieved - if yes finish simulation with solution
+            if self.goal_test(curr_node.nodes_with_population):
+                (solution_path, people_saved) = generate_solution(curr_node)
+                return solution(solution_path, people_saved, curr_node.g)
+
+            self.expand_and_insert_to_fringe(curr_node)
+
+            print("--------- finished iteration ------------")
+
+class A_star_search(AI_Agent):
+    def __init__(self, pos, h_func):
+        super().__init__(pos, h_func, params.AGENT_TYPE_A_STAR_SEARCH)
+        self.close = []
+        self.name = "A_star search"
     
     def add_to_close(self, vertex_id, g, h):
         self.close.append({"id": vertex_id, "f": g + h})
 
+    def should_insert_to_close(self, curr_node):
+        for dict in self.close:
+            if dict["id"] == curr_node.id: # Found node with same id in close
+                if self.calc_f(curr_node) < dict["f"]:
+                    self.close.remove(dict) # TODO: verify if indeed required
+                    return True
+                else:
+                    return False
+        return True # node with same id doesn't exist in close
+
     def act(self):
         print("{} started acting\n".format(self.get_name()))
-        src_vertex = params.world_graph.get_vertex(self.pos)
 
-        if self.open.is_empty():
-            self.active = False
-            # TODO: should return none and simulator terminate? or should also change agent state to terminate?
-            # return None
+        while True:
+            print("--------- started iteration ------------")
+            # If fringe is empty, search agent failed and should return none
+            if self.fringe.is_empty():
+                return None
 
-        curr_heap_element = self.open.extract_min()
-        curr_node = curr_heap_element.value
-        curr_node.print_search_tree_node()
-        self.add_to_close(curr_node.id, curr_node.g, curr_node.h)
+            # Pop top node in fringe
+            curr_heap_element = self.fringe.extract_min()
+            curr_node = curr_heap_element.value
+            if params.debug:
+                print("---- curr_expanded_node")
+                curr_node.print_search_tree_node()
+                print("----")
+            
+            # If popped node has infi as heuristic function value, There is no solution
+            if curr_node.h == params.infi:
+                return None
 
-        # ignore brittle broken (already visited vertices)
-        while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
-            curr_vertex_id = self.open.extract_min().value
+            # Check if goal_test is achieved - if yes finish simulation with solution
+            if self.goal_test(curr_node.nodes_with_population):
+                (solution_path, people_saved) = generate_solution(curr_node)
+                return solution(solution_path, people_saved, curr_node.g)
 
-        curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
-        # rescue people and update env
-        curr_vertex.reset_population()  # also reduces its population from total_victims
-        if curr_vertex.check_is_brittle():
-            curr_vertex.break_ver()
-        if goal_test():
-            return generate_solution(curr_vertex_id)
+            if not self.should_insert_to_close(curr_node):
+                continue
+            
+            self.add_to_close(curr_node.id, curr_node.g, curr_node.h)
+            if params.debug:
+                print(self.close)
 
-        # node = current
-        # node' = closed.pop(node.id)
-        # if node' != None
-            # if f(node) < f(node')
-                # closed.add(node)
-            # else
-                # closed.add(node')
-        # else (node' = None)
-            #closed.add(node)
-            #expand(node)
-        if not self.closed.contains(HeapElement(self.h(curr_vertex_id), curr_vertex_id)):
-            self.closed.insert_element(HeapElement(self.h(curr_vertex_id), curr_vertex_id))
-            # TODO: what if an element with same value but diff key (h(value)) exists in closed?
-            if self.num_of_expands < params.expansions_limit:
-                self.expand_and_insert_to_open(curr_vertex_id)
-                self.num_of_expands += 1
-            else:
-                self.active = False
-                # TODO: should return none and simulator terminate? or should also change agent state to terminate?
-                # return None
+            neigbors_h_list = self.expand_and_insert_to_fringe(curr_node)
+            if all_infi(neigbors_h_list):
+                dict_to_remove = {"id": curr_node.id, "f": self.calc_f(curr_node)}
+                self.close.remove(dict_to_remove)
+            print("--------- finished iteration ------------")
 
-    def expand_and_insert_to_open(self, vertex_id):
-        graph_vertex = params.world_graph.get_vertex(vertex_id)
-        if graph_vertex is not None:
-            for neighbor in graph_vertex.adjacent.keys():
-                neighbor.solution_parent = graph_vertex.id
-                self.open.insert_element(HeapElement(self.h_func(neighbor), neighbor))
 
-class realtime_A_star_search(Agent):
+
+class realtime_A_star_search(AI_Agent):
     def __init__(self, pos, h_func):
-        super().__init__(pos)
+        super().__init__(pos, params.AGENT_TYPE_REALTIME_A_STAR_SEARCH)
         self.open = MinHeap()
         self.closed = MinHeap()
         self.h_func = h_func
         self.num_of_expands = 0
         # initialize fringe to start point
         self.open.insert_element(HeapElement(h_func(pos), pos))
-        self.type = params.AGENT_TYPE_REALTIME_A_STAR_SEARCH
 
     def act(self):
         if self.open.is_empty():
@@ -423,3 +469,14 @@ class realtime_A_star_search(Agent):
                 neighbor.solution_parent = graph_vertex.id
                 self.open.insert_element(HeapElement(self.h_func(neighbor), neighbor))
 
+
+class solution:
+    def __init__(self, solution_path, people_saved, sum_of_weights):
+        self.solution_path = solution_path
+        self.people_saved = people_saved
+        self.sum_of_weights = sum_of_weights
+
+    def print_solution(self):
+        print("solution_path: {}".format(self.solution_path))
+        print("people_saved: {}".format(self.people_saved))
+        print("sum_of_weights: {}".format(self.sum_of_weights))

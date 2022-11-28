@@ -1,10 +1,6 @@
 from graph import *
 import params
-import sys
 from minHeap import MinHeap, HeapElement
-
-infi = sys.maxsize
-
 
 def line_to_vertex(line):
     v_id = -1
@@ -30,13 +26,16 @@ def line_to_edge(line):
     source.add_neighbor(dest.id, int(line[3].split('W')[1]))
     dest.add_neighbor(source.id, int(line[3].split('W')[1]))
 
+def print_agents():
+    print("## Agents: ##\n---------------------------\n")
+    for agent in params.agents_list:
+        agent.print_agent()
+    print("\n---------------------------\n## end of agents ##\n")
 
 def print_world_state():
     print("###### WORLD STATE ######\n")
-    for vertex in params.world_graph.vert_dict:
-        params.world_graph.get_vertex(vertex).print_vertex()
-    for agent in params.agents_list:
-        agent.print_agent()
+    params.world_graph.print_graph_vertices()
+    print_agents()
     print("###### FINISHED WORLD STATE ######\n")
 
 
@@ -45,7 +44,7 @@ def print_world_state():
 def dijkstra_dist(start_vertex, g):
     # Stores distance of each
     # vertex from source vertex
-    dist = [infi for i in range(g.num_vertices)]
+    dist = [params.infi for i in range(g.num_vertices)]
 
     # bool array that shows
     # whether the vertex 'i'
@@ -88,7 +87,7 @@ def dijkstra_dist(start_vertex, g):
             break
 
         # The new current_vertex
-        min_dist = infi
+        min_dist = params.infi
         next_id = 0
 
         # Loop to update the distance
@@ -136,7 +135,8 @@ def pick_best_brittle_dest(dist):
 
 def all_infi(dist):
     for idx in dist:
-        if idx != infi:
+        print("shitfuck idx {}".format(idx))
+        if idx != params.infi:
             return False
     return True
 
@@ -144,10 +144,10 @@ def all_infi(dist):
 # Returns index of vertex to choose to go to next, or -1 if doesn't exist
 def min_dist_with_cond(dist, agent_type):
     # 0 is always the distance to current index, which we don't want to select.
-    dist[dist.index(0)] = infi
+    dist[dist.index(0)] = params.infi
     while (not all_infi(dist)):
         curr_vertex_dist = min(dist)
-        if curr_vertex_dist == infi:  # vertex is unreachable or self
+        if curr_vertex_dist == params.infi:  # vertex is unreachable or self
             return -1
         curr_vertex = params.world_graph.get_vertex(dist.index(curr_vertex_dist))
         if (agent_type == params.AGENT_TYPE_STUPID) and (
@@ -157,7 +157,7 @@ def min_dist_with_cond(dist, agent_type):
                 curr_vertex.brittle_not_broken()):  # Found good vertex for saboteur
             return dist.index(curr_vertex_dist)
 
-        dist[dist.index(curr_vertex_dist)] = infi
+        dist[dist.index(curr_vertex_dist)] = params.infi
     return -1
 
 
@@ -174,22 +174,24 @@ def extract_next_vertex_in_path(path, src_vertex_index, dest_vertex_index):
 
 
 def get_shortest_path_clique(src, populated_vertices_id_list, broken_vertices_id_list):
+    temp_random_pop_value = 15
+    temp_random_brittle_value = False
     world_graph_copy = Graph()
     world_graph_copy.copy_graph(params.world_graph, broken_vertices_id_list)
     clique = Graph()
     # add all vertices to the new clique
     clique.add_vertex(
-        Vertex(src, params.world_graph.get_vertex(src).get_population(), params.world_graph.get_vertex(src).is_brittle))
+        Vertex(src, temp_random_pop_value, temp_random_brittle_value))
     for v_id in populated_vertices_id_list:
         if v_id not in clique.get_vertices_keys():
-            clique.add_vertex(Vertex(v_id, params.world_graph.get_vertex(v_id).get_population(),
-                                    params.world_graph.get_vertex(v_id).is_brittle))
+            clique.add_vertex(Vertex(v_id, temp_random_pop_value,
+                                    temp_random_brittle_value))
     # add all edges to the new clique
     for vertex in clique.get_vertices_values():
         (dist, path) = dijkstra_dist(world_graph_copy.get_vertex(vertex.id), world_graph_copy)
         for shortest_path in dist:
             dest_vertex_id = dist.index(shortest_path)
-            if dest_vertex_id != vertex.id and shortest_path != infi and dest_vertex_id in clique.get_vertices_keys():
+            if dest_vertex_id != vertex.id and shortest_path != params.infi and dest_vertex_id in clique.get_vertices_keys():
                 dest_vertex = clique.get_vertex(dest_vertex_id)
                 clique.add_edge(vertex, dest_vertex, shortest_path)
 
@@ -197,7 +199,7 @@ def get_shortest_path_clique(src, populated_vertices_id_list, broken_vertices_id
 
 
 def min_key_for_prim(g, key, mst_set):
-    min = infi
+    min = params.infi
     for vertex_id in g.get_vertices_keys():
         if key[vertex_id] < min and mst_set[vertex_id] == False:
             min = key[vertex_id]
@@ -213,10 +215,10 @@ def get_mst_sum(g):
     # test if g is a clique, meaning there is a path to all populated vertices
     for vertex in g.get_vertices_values():
         if len(vertex.adjacent.keys()) < g.num_vertices - 1:
-            return infi
+            return params.infi
 
     for vertex_id in g.get_vertices_keys():
-        key[vertex_id] = infi
+        key[vertex_id] = params.infi
         mst_set[vertex_id] = False
 
     key[list(key.keys())[0]] = 0
@@ -235,3 +237,10 @@ def get_mst_sum(g):
         weights_sum += weight
 
     return weights_sum
+
+def print_error_and_exit(str):
+    print("Error: {}\n".format(str))
+    exit(1)
+
+def get_vertex_from_id(vertex_id):
+    return params.world_graph.get_vertex(vertex_id)

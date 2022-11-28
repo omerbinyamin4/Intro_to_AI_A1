@@ -8,14 +8,6 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 
 input_graphs = "./input_graphs"
 
-
-def print_agent_list():
-    print("## Agents list ##")
-    for agent in params.agents_list:
-        print(agent.get_name())
-    print("## Finished agent list ##\n")
-
-
 def init_graph_from_file(input_env):
     input_file = open(input_env, 'r')
     lines = input_file.readlines()
@@ -88,25 +80,21 @@ def startup(input_env, debug_mode):
         init_agents(saboteur_pos, params.AGENT_TYPE_SABOTEUR)
         simulate()
     elif int(task) == 2:
-        # greedy_search_pos = input("enter start position for single greedy search agent\n"
-        #                           "possible positions are 0-{}\n"
-        #                           "enter -1 for no saboteur agents\n"
-        #                           .format(params.world_graph.num_vertices - 1)).split(',')
-        # clique = get_shortest_path_clique(0, [1, 3], [2])
-        # clique.print_graph_vertices()
-        # print(get_mst_sum(clique))
+        greedy_search_pos = input("enter start position for single greedy search agent\n"
+                                  "possible positions are 0-{}\n"
+                                  "enter -1 for no greedy search agents\n"
+                                  .format(params.world_graph.num_vertices - 1)).split(',')
         a_star_search_pos = input("enter start position for single a_star search agent\n"
                                   "possible positions are 0-{}\n"
                                   "enter -1 for no a_star search agents\n"
                                   .format(params.world_graph.num_vertices - 1)).split(',')
-        # realtime_a_star_search_pos = input("enter start position for single realtime a _star search agent\n"
-        #                           "possible positions are 0-{}\n"
-        #                           "enter -1 for no realtime a_star search agents\n"
-        #                           .format(params.world_graph.num_vertices - 1)).split(',')
-        # init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
+        realtime_a_star_search_pos = input("enter start position for single realtime a_star search agent\n"
+                                  "possible positions are 0-{}\n"
+                                  "enter -1 for no realtime a_star search agents\n"
+                                  .format(params.world_graph.num_vertices - 1)).split(',')
+        init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
         init_agents(a_star_search_pos, params.AGENT_TYPE_A_STAR_SEARCH)
-        # init_agents(realtime_a_star_search_pos, params.AGENT_TYPE_REALTIME_A_STAR_SEARCH)
-
+        init_agents(realtime_a_star_search_pos, params.AGENT_TYPE_REALTIME_A_STAR_SEARCH)
 
         simulate_2()
     else:
@@ -116,7 +104,6 @@ def startup(input_env, debug_mode):
 def simulate():
     print("------------------ Simulation Started ------------------\n")
     if params.debug:
-        print_agent_list()
         print_world_state()
 
     while params.should_simulate:
@@ -139,16 +126,15 @@ def simulate():
 def simulate_2():
     print("------------------ Simulation Started ------------------\n")
     if params.debug:
-        print_agent_list()
         print_world_state()
     agent = params.agents_list.pop(0)
-    while params.should_simulate:
-        sol = agent.act()
-        if (sol is not None) and (not params.should_simulate):
-            print("Solution Found :", sol)
-            print("\n")
-        elif not params.should_simulate:
-            print("No Solution was Found :(\n")
+    sol = agent.act()
+    if sol is not None:
+        print("## Solution found: ##\n---------------------------\n")
+        sol.print_solution()
+        print("\n---------------------------\n## end of solution ##\n")
+    else:
+        print("No Solution was Found :(\n")
     print("------------------ Simulation Ended ------------------\n")
 
 

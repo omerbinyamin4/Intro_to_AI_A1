@@ -1,3 +1,4 @@
+import sys
 from graph import Graph
 
 world_graph = Graph()
@@ -24,3 +25,5 @@ AGENT_TYPE_REALTIME_A_STAR_SEARCH = 5
 def agent_type_doesnt_exist(agent_type):
     print("Error: agent type {} not supported".format(agent_type))
     exit(1)
+
+infi = sys.maxsize
