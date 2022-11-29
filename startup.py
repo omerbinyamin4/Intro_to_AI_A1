@@ -1,6 +1,3 @@
-import utils
-from components import *
-from graph import *
 from agents import *
 from utils import *
 import params
@@ -80,21 +77,36 @@ def startup(input_env, debug_mode):
         init_agents(saboteur_pos, params.AGENT_TYPE_SABOTEUR)
         simulate()
     elif int(task) == 2:
-        greedy_search_pos = input("enter start position for single greedy search agent\n"
-                                  "possible positions are 0-{}\n"
-                                  "enter -1 for no greedy search agents\n"
-                                  .format(params.world_graph.num_vertices - 1)).split(',')
-        a_star_search_pos = input("enter start position for single a_star search agent\n"
-                                  "possible positions are 0-{}\n"
-                                  "enter -1 for no a_star search agents\n"
-                                  .format(params.world_graph.num_vertices - 1)).split(',')
-        realtime_a_star_search_pos = input("enter start position for single realtime a_star search agent\n"
-                                  "possible positions are 0-{}\n"
-                                  "enter -1 for no realtime a_star search agents\n"
-                                  .format(params.world_graph.num_vertices - 1)).split(',')
-        init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
-        init_agents(a_star_search_pos, params.AGENT_TYPE_A_STAR_SEARCH)
-        init_agents(realtime_a_star_search_pos, params.AGENT_TYPE_REALTIME_A_STAR_SEARCH)
+        single_or_multi = input("choose mode:\n"
+                                "(1) single agent\n"
+                                "(2) multi agent\n")
+        if int(single_or_multi) == 1:
+            single_agent_type = input("choose agent type:\n"
+                                      "(1) Greedy Search Agent\n"
+                                      "(2) A* Search Agent\n"
+                                      "(3) Real Time Search Agent\n").split(',')
+            pos = input("enter start position for the agent\n").split(',')
+            init_agents(pos, int(single_agent_type[0]) + 2)
+
+        elif int(single_or_multi) == 2:
+            greedy_search_pos = input("enter start position for single greedy search agent\n"
+                                      "possible positions are 0-{}\n"
+                                      "enter -1 for no greedy search agents\n"
+                                      .format(params.world_graph.num_vertices - 1)).split(',')
+            a_star_search_pos = input("enter start position for single a_star search agent\n"
+                                      "possible positions are 0-{}\n"
+                                      "enter -1 for no a_star search agents\n"
+                                      .format(params.world_graph.num_vertices - 1)).split(',')
+            realtime_a_star_search_pos = input("enter start position for single realtime a_star search agent\n"
+                                      "possible positions are 0-{}\n"
+                                      "enter -1 for no realtime a_star search agents\n"
+                                      .format(params.world_graph.num_vertices - 1)).split(',')
+            init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
+            init_agents(a_star_search_pos, params.AGENT_TYPE_A_STAR_SEARCH)
+            init_agents(realtime_a_star_search_pos, params.AGENT_TYPE_REALTIME_A_STAR_SEARCH)
+
+        params.T = int(input("enter wanted T parameter value for performance measurement:\n"
+                         "(value should be non negative, insert 0 as default)\n"))
 
         simulate_2()
     else:
@@ -129,9 +141,9 @@ def simulate_2():
         print_world_state()
     agent = params.agents_list.pop(0)
     sol = agent.act()
-    if sol is not None:
+    if sol.success:
         print("## Solution found: ##\n---------------------------\n")
-        sol.print_solution()
+        sol.print_result()
         print("\n---------------------------\n## end of solution ##\n")
     else:
         print("No Solution was Found :(\n")
@@ -144,7 +156,7 @@ if __name__ == '__main__':
         formatter_class=RawTextHelpFormatter,
         description="Simulates agents for the hurricane evacuation problem",
     )
-    arg_parser.add_argument('-i', "--input_env", default="input.txt", help='Enter input environment')
+    arg_parser.add_argument('-i', "--input_env", default="simple_env.txt", help='Enter input environment')
     arg_parser.add_argument('-d', "--debug", action='store_true', help='Add this flag if you wish to be in debug mode')
 
     command_line_args = arg_parser.parse_args()
