@@ -86,7 +86,7 @@ def startup(input_env, debug_mode):
                                       "(1) Greedy Search Agent\n"
                                       "(2) A* Search Agent\n"
                                       "(3) Real Time Search Agent\n").split(',')
-            pos = input("enter start position for the agent\n").split(',')
+            pos = input("enter start position for the agent:\n").split(',')
             if single_agent_type[0] == '3':
                 prompt_user_l()
             init_agents(pos, int(single_agent_type[0]) + 2)

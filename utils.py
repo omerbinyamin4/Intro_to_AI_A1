@@ -135,7 +135,6 @@ def pick_best_brittle_dest(dist):
 
 def all_infi(dist):
     for idx in dist:
-        print("shitfuck idx {}".format(idx))
         if idx != params.infi:
             return False
     return True

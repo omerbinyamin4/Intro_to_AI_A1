@@ -2,6 +2,9 @@ import params
 from utils import *
 from minHeap import *
 
+temp_l = 10
+temp_l2 = 10000
+
 
 def calc_sum_of_people_saved(visited_vertex_id_list):
     sum_of_people_saved = 0
@@ -327,51 +330,9 @@ class AI_Agent(Agent):
     def calc_f(self, node):
         if self.type == params.AGENT_TYPE_GREEDY_SEARCH:
             return node.h
-        if self.type == params.AGENT_TYPE_A_STAR_SEARCH:
+        if self.type == params.AGENT_TYPE_A_STAR_SEARCH or self.type == params.AGENT_TYPE_REALTIME_A_STAR_SEARCH:
             return node.g + node.h
         print_error_and_exit("agent type not supported: {}".format(self.type))
-
-
-class Greedy_search(AI_Agent):
-    def __init__(self, pos, h_func):
-        super().__init__(pos, h_func, params.AGENT_TYPE_GREEDY_SEARCH)
-        self.name = "greedy stupid"
-
-    def act(self):
-        while True:
-            print("--------- started iteration ------------")
-            # If fringe is empty, search agent failed and should return none
-            if self.fringe.is_empty():
-                return result(None, 0, 0, False, self.num_of_expands, self.name)
-
-            # Pop top node in fringe
-            curr_heap_element = self.fringe.extract_min()
-            curr_node = curr_heap_element.value
-            if params.debug:
-                print("---- curr_expanded_node")
-                curr_node.print_search_tree_node()
-                print("----")
-
-            (solution_path, people_saved) = generate_solution(curr_node)
-
-            # If popped node has infi as heuristic function value, There is no solution
-            if curr_node.h == params.infi:
-                return result(solution_path, people_saved, curr_node.g, False, self.num_of_expands, self.name)
-
-            # Check if goal_test is achieved - if yes finish simulation with solution
-            if self.goal_test(curr_node.nodes_with_population):
-                return result(solution_path, people_saved, curr_node.g, True, self.num_of_expands, self.name)
-
-            self.expand_and_insert_to_fringe(curr_node)
-
-            print("--------- finished iteration ------------")
-
-
-class A_star_search(AI_Agent):
-    def __init__(self, pos, h_func):
-        super().__init__(pos, h_func, params.AGENT_TYPE_A_STAR_SEARCH)
-        self.close = []
-        self.name = "A_star search"
 
     def add_to_close(self, vertex_id, g, h):
         self.close.append({"id": vertex_id, "f": g + h})
@@ -386,14 +347,17 @@ class A_star_search(AI_Agent):
                     return False
         return True  # node with same id doesn't exist in close
 
-    def act(self):
-        print("{} started acting\n".format(self.get_name()))
+class Greedy_search(AI_Agent):
+    def __init__(self, pos, h_func):
+        super().__init__(pos, h_func, params.AGENT_TYPE_GREEDY_SEARCH)
+        self.name = "greedy stupid"
 
-        while True:
+    def act(self):
+        while self.num_of_expands < temp_l2:
             print("--------- started iteration ------------")
             # If fringe is empty, search agent failed and should return none
             if self.fringe.is_empty():
-                return result(None, 0, 0, False, self.num_of_expands, self.name)
+                return result(None, 0, 0, False, self.num_of_expands, "")
 
             # Pop top node in fringe
             curr_heap_element = self.fringe.extract_min()
@@ -403,14 +367,52 @@ class A_star_search(AI_Agent):
                 curr_node.print_search_tree_node()
                 print("----")
 
-            (solution_path, people_saved) = generate_solution(curr_node)
-
             # If popped node has infi as heuristic function value, There is no solution
             if curr_node.h == params.infi:
-                return result(solution_path, people_saved, curr_node.g, False, self.num_of_expands, self.name)
+                return result(None, 0, 0, False, 0, "")
 
             # Check if goal_test is achieved - if yes finish simulation with solution
             if self.goal_test(curr_node.nodes_with_population):
+                (solution_path, people_saved) = generate_solution(curr_node)
+                return result(solution_path, people_saved, curr_node.g, True, self.num_of_expands, self.name)
+
+            self.expand_and_insert_to_fringe(curr_node)
+
+            print("--------- finished iteration ------------")
+
+        return result(None, 0, 0, False, 0, "")
+
+
+class A_star_search(AI_Agent):
+    def __init__(self, pos, h_func):
+        super().__init__(pos, h_func, params.AGENT_TYPE_A_STAR_SEARCH)
+        self.close = []
+        self.name = "A_star search"
+
+    def act(self):
+        print("{} started acting\n".format(self.get_name()))
+
+        while self.num_of_expands < temp_l2:
+            print("--------- started iteration ------------")
+            # If fringe is empty, search agent failed and should return none
+            if self.fringe.is_empty():
+                return result(None, 0, 0, False, 0, "")
+
+            # Pop top node in fringe
+            curr_heap_element = self.fringe.extract_min()
+            curr_node = curr_heap_element.value
+            if params.debug:
+                print("---- curr_expanded_node")
+                curr_node.print_search_tree_node()
+                print("----")
+
+            # If popped node has infi as heuristic function value, There is no solution
+            if curr_node.h == params.infi:
+                return result(None, 0, 0, False, 0, "")
+
+            # Check if goal_test is achieved - if yes finish simulation with solution
+            if self.goal_test(curr_node.nodes_with_population):
+                (solution_path, people_saved) = generate_solution(curr_node)
                 return result(solution_path, people_saved, curr_node.g, True, self.num_of_expands, self.name)
 
             if not self.should_insert_to_close(curr_node):
@@ -425,72 +427,69 @@ class A_star_search(AI_Agent):
                 dict_to_remove = {"id": curr_node.id, "f": self.calc_f(curr_node)}
                 self.close.remove(dict_to_remove)
             print("--------- finished iteration ------------")
-
+        
+        return result(None, 0, 0, False, 0, "")
 
 class realtime_A_star_search(AI_Agent):
     def __init__(self, pos, h_func):
         super().__init__(pos, h_func, params.AGENT_TYPE_REALTIME_A_STAR_SEARCH)
-        self.open = MinHeap()
-        self.closed = MinHeap()
-        self.h_func = h_func
-        self.num_of_expands = 0
-        # initialize fringe to start point
-        self.open.insert_element(HeapElement(h_func(pos), pos))
+        self.close = []
+        self.name = "Realtime A_star search"
+        self.num_of_expands_curr_iter = 0
+        self.temp_path = []
 
     def act(self):
-        if self.open.is_empty():
-            self.active = False
-            # TODO: should return none and simulator terminate? or should also change agent state to terminate?
-            # return None
+        print("{} started acting\n".format(self.get_name()))
 
-        curr_vertex_id = self.fringe.extract_min().value
+        while self.num_of_expands < temp_l2:
+            while self.num_of_expands < temp_l:
+                print("--------- started iteration ------------")
+                # If fringe is empty, search agent failed and should return none
+                if self.fringe.is_empty():
+                    return result(None, 0, 0, False, 0, "")
 
-        # ignore brittle broken (already visited vertices)
-        while params.world_graph.get_vertex(curr_vertex_id).check_if_broken():
-            curr_vertex_id = self.fringe.extract_min().value
+                # Pop top node in fringe
+                curr_heap_element = self.fringe.extract_min()
+                curr_node = curr_heap_element.value
+                if params.debug:
+                    print("---- curr_expanded_node")
+                    curr_node.print_search_tree_node()
+                    print("----")
 
-        curr_vertex = params.world_graph.get_vertex(curr_vertex_id)
-        # rescue people and update env
-        curr_vertex.reset_population()  # also reduces its population from total_victims
-        if curr_vertex.check_is_brittle():
-            curr_vertex.break_ver()
-        if goal_test():
-            return generate_solution(curr_vertex_id)
+                # If popped node has infi as heuristic function value, There is no solution
+                if curr_node.h == params.infi:
+                    return result(None, 0, 0, False, 0, "")
 
-        if not self.closed.contains(HeapElement(self.h(curr_vertex_id), curr_vertex_id)):
-            self.closed.insert_element(HeapElement(self.h(curr_vertex_id), curr_vertex_id))
-            # TODO: what if an element with same value but diff key (h(value)) exists in closed?
-            if self.num_of_expands < params.user_L:
-                self.expand_and_insert_to_open(curr_vertex_id)
-                self.num_of_expands += 1
-            else:
-                so_far_sol = generate_solution(curr_vertex_id)
-                self.pos = so_far_sol[1]  # move agent one step further
-                # TODO: update env according to the step (reset population, break vertex if brittle
-                self.num_of_expands = 0
-                self.active = False
-                # TODO: should return none and simulator terminate? or should also change agent state to terminate?
-                # return None
+                # Check if goal_test is achieved - if yes finish simulation with solution
+                if self.goal_test(curr_node.nodes_with_population):
+                    (solution_path, people_saved) = generate_solution(curr_node)
+                    return result(solution_path, people_saved, curr_node.g, True, self.num_of_expands, self.name)
 
-    def expand_and_insert_to_open(self, vertex_id):
-        graph_vertex = params.world_graph.get_vertex(vertex_id)
-        if graph_vertex is not None:
-            for neighbor in graph_vertex.adjacent.keys():
-                neighbor.solution_parent = graph_vertex.id
-                self.open.insert_element(HeapElement(self.h_func(neighbor), neighbor))
+                if not self.should_insert_to_close(curr_node):
+                    continue
 
+                self.add_to_close(curr_node.id, curr_node.g, curr_node.h)
+                if params.debug:
+                    print(self.close)
 
-class solution:
-    def __init__(self, solution_path, people_saved, sum_of_weights):
-        self.solution_path = solution_path
-        self.people_saved = people_saved
-        self.sum_of_weights = sum_of_weights
+                neigbors_h_list = self.expand_and_insert_to_fringe(curr_node)
+                if all_infi(neigbors_h_list):
+                    dict_to_remove = {"id": curr_node.id, "f": self.calc_f(curr_node)}
+                    self.close.remove(dict_to_remove)
+                self.num_of_expands_curr_iter += 1
+                print("--------- finished iteration ------------")
+            
+            curr_decided_node = self.realtime_got_to_limit()
 
-    def print_solution(self):
-        print("solution_path: {}".format(self.solution_path))
-        print("people_saved: {}".format(self.people_saved))
-        print("sum_of_weights: {}".format(self.sum_of_weights))
+        return result(None, 0, 0, False, 0, self.name)
 
+    def realtime_got_to_limit(self):
+        if self.fringe.is_empty():
+            return result(None, 0, 0, False, 0, self.name)
+
+    def empty_fringe(self):
+        while not self.fringe.is_empty():
+            self.fringe.extract_min()
 
 class result:
     def __init__(self, solution_path, people_saved, sum_of_weights, is_success, expands, agent_name):
@@ -502,13 +501,10 @@ class result:
         self.agent_name = agent_name
 
     def print_result(self):
-        print("result status: {}".format(self.success))
-        if self.success:
-            print("solution_path: {}".format(self.solution_path))
-            print("people_saved: {}".format(self.people_saved))
-            print("sum_of_weights: {}".format(self.sum_of_weights))
-            print("num of expands taken: {}".format(self.num_of_expands))
-            print("time taken for search: {}".format(self.num_of_expands * params.T))
-            print("score v1 (people_saved*1000 - sum_of_weights) = {}".format(self.people_saved * 1000 - self.sum_of_weights))
-            print("score v1 (people_saved*1000 - time taken) {}".format(self.people_saved * 1000 - (self.num_of_expands * params.T)))
-
+        print("solution_path: {}".format(self.solution_path))
+        print("people_saved: {}".format(self.people_saved))
+        print("sum_of_weights: {}".format(self.sum_of_weights))
+        print("num of expands taken: {}".format(self.num_of_expands))
+        print("time taken for search: {}".format(self.num_of_expands * params.T))
+        print("score v1 (people_saved*1000 - sum_of_weights) = {}".format(self.people_saved * 1000 - self.sum_of_weights))
+        print("score v2 (people_saved*1000 - time taken) = {}".format(self.people_saved * 1000 - (self.num_of_expands * params.T)))
