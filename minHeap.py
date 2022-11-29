@@ -73,6 +73,15 @@ class Search_tree_node:
         self.h = h # Estimated cost to goal from current node
         self.node_hash = node_hash # for debug - differ between 2 nodes with same id
 
+    def __lt__(self, other):
+        return self.node_hash < other.node_hash
+
+    def __gt__(self, other):
+        return self.node_hash > other.node_hash
+
+    def __eq__(self, other):
+        return self.node_hash == other.node_hash
+
     def print_search_tree_node(self):
         print("search_tree_node {}:".format(self.id))
         print("\tnode_hash: {}".format(self.node_hash))

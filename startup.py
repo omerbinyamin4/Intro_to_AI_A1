@@ -5,6 +5,7 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 
 input_graphs = "./input_graphs"
 
+
 def init_graph_from_file(input_env):
     input_file = open(input_env, 'r')
     lines = input_file.readlines()
@@ -86,6 +87,8 @@ def startup(input_env, debug_mode):
                                       "(2) A* Search Agent\n"
                                       "(3) Real Time Search Agent\n").split(',')
             pos = input("enter start position for the agent\n").split(',')
+            if single_agent_type[0] == '3':
+                prompt_user_l()
             init_agents(pos, int(single_agent_type[0]) + 2)
 
         elif int(single_or_multi) == 2:
@@ -98,15 +101,16 @@ def startup(input_env, debug_mode):
                                       "enter -1 for no a_star search agents\n"
                                       .format(params.world_graph.num_vertices - 1)).split(',')
             realtime_a_star_search_pos = input("enter start position for single realtime a_star search agent\n"
-                                      "possible positions are 0-{}\n"
-                                      "enter -1 for no realtime a_star search agents\n"
-                                      .format(params.world_graph.num_vertices - 1)).split(',')
+                                               "possible positions are 0-{}\n"
+                                               "enter -1 for no realtime a_star search agents\n"
+                                               .format(params.world_graph.num_vertices - 1)).split(',')
+            if realtime_a_star_search_pos[0] != '-1':
+                prompt_user_l()
             init_agents(greedy_search_pos, params.AGENT_TYPE_GREEDY_SEARCH)
             init_agents(a_star_search_pos, params.AGENT_TYPE_A_STAR_SEARCH)
             init_agents(realtime_a_star_search_pos, params.AGENT_TYPE_REALTIME_A_STAR_SEARCH)
 
-        params.T = int(input("enter wanted T parameter value for performance measurement:\n"
-                         "(value should be non negative, insert 0 as default)\n"))
+        prompt_user_t()
 
         simulate_2()
     else:
@@ -139,15 +143,39 @@ def simulate_2():
     print("------------------ Simulation Started ------------------\n")
     if params.debug:
         print_world_state()
-    agent = params.agents_list.pop(0)
-    sol = agent.act()
-    if sol.success:
-        print("## Solution found: ##\n---------------------------\n")
-        sol.print_result()
-        print("\n---------------------------\n## end of solution ##\n")
-    else:
-        print("No Solution was Found :(\n")
+    results = []
+
+    # run all agents at turns
+    for agent in params.agents_list:
+        results.append(agent.act())
+
+    # print all results
+    for res in results:
+        if res.success:
+            print("## Solution found by Agent '{}': ##\n---------------------------\n".format(res.agent_name))
+            res.print_result()
+            print("\n---------------------------\n## end of solution ##\n")
+        else:
+            print("No Solution was Found :(\n")
     print("------------------ Simulation Ended ------------------\n")
+
+
+def prompt_user_l():
+    should_use_def_l = input("Do you want to define new limit of expansions for the realtime A* agent?\n"
+                             "(1) - Yes\n"
+                             "(0) - No\n")
+    if int(should_use_def_l) == 1:
+        user_l = input("insert limit of expansion for the realtime A* agent\n")
+        params.user_L = int(user_l[0])
+
+
+def prompt_user_t():
+    should_use_def_l = input("Do you want to define new T value for performance measurement?\n"
+                             "(1) - Yes\n"
+                             "(0) - No\n")
+    if int(should_use_def_l) == 1:
+        user_t = input("insert T value for performance measurement\n")
+        params.T = int(user_t[0])
 
 
 if __name__ == '__main__':
@@ -156,7 +184,7 @@ if __name__ == '__main__':
         formatter_class=RawTextHelpFormatter,
         description="Simulates agents for the hurricane evacuation problem",
     )
-    arg_parser.add_argument('-i', "--input_env", default="simple_env.txt", help='Enter input environment')
+    arg_parser.add_argument('-i', "--input_env", default="simple_env2.txt", help='Enter input environment')
     arg_parser.add_argument('-d', "--debug", action='store_true', help='Add this flag if you wish to be in debug mode')
 
     command_line_args = arg_parser.parse_args()
