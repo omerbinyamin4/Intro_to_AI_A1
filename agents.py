@@ -62,15 +62,11 @@ class Agent:
     def update_env(self, curr_dest_vertex):
         if self.is_saviour() and curr_dest_vertex.has_population():
             curr_dest_vertex.reset_population()
-            self.add_to_population_list(curr_dest_vertex.get_id())
         if curr_dest_vertex.check_is_brittle():
             curr_dest_vertex.break_ver()
-            self.add_to_broken_list(curr_dest_vertex.get_id())
 
     def update_score(self, add_score):
         self.score += add_score
-        if params.debug:
-            print
 
     def get_score(self):
         return self.score
@@ -154,7 +150,7 @@ class Human(Agent):
         self.update_env(init_vertex)
 
     def act(self):
-        print("{} started acting\n".format(self.get_name()))
+        print("'{}' agent started acting".format(self.get_name()))
         src_vertex = params.world_graph.get_vertex(self.pos)
         curr_dest_vertex_index = int(input("enter next vertex to move to, or -1 to terminate\n"))
         if curr_dest_vertex_index == -1:
@@ -184,7 +180,7 @@ class Stupid(Agent):
         self.update_env(init_vertex)
 
     def act(self):
-        print("{} started acting\n".format(self.get_name()))
+        print("'{}' agent started acting".format(self.get_name()))
         src_vertex = params.world_graph.get_vertex(self.pos)
         if not self.get_active_status():
             return "no-op"
@@ -225,7 +221,7 @@ class Saboteur(Agent):
         self.update_env(init_vertex)
 
     def act(self):
-        print("{} started acting\n".format(self.get_name()))
+        print("'{}' agent started acting".format(self.get_name()))
         src_vertex = params.world_graph.get_vertex(self.pos)
         if not self.get_active_status():
             return "no-op"
@@ -360,6 +356,8 @@ class Greedy_search(AI_Agent):
         self.name = "greedy stupid"
 
     def act(self):
+        print("'{}' agent started acting".format(self.get_name()))
+
         while self.num_of_expands < DEFAULT_EXPANSION_LIMIT:
             if params.debug:
                 print("--------- started iteration {} ------------".format(self.num_of_expands + 1))
@@ -399,7 +397,7 @@ class A_star_search(AI_Agent):
         self.name = "A* search"
 
     def act(self):
-        print("{} started acting\n".format(self.get_name()))
+        print("'{}' agent started acting".format(self.get_name()))
 
         while self.num_of_expands < params.DEFAULT_EXPANSION_LIMIT:
             if params.debug:
@@ -434,7 +432,6 @@ class A_star_search(AI_Agent):
 
             neigbors_nodes_list = self.expand_and_insert_to_fringe(curr_node)
             neigbors_h_list = [node.h for node in neigbors_nodes_list]
-            print(neigbors_h_list)
             if all_infi(neigbors_h_list):
                 dict_to_remove = {"id": curr_node.id, "f": self.calc_f(curr_node)}
                 self.close.remove(dict_to_remove)
@@ -453,12 +450,13 @@ class realtime_A_star_search(AI_Agent):
         self.num_of_expands_curr_iter = 0
 
     def act(self):
-        print("{} started acting\n".format(self.get_name()))
+        print("'{}' agent started acting".format(self.get_name()))
 
         while self.num_of_expands < params.DEFAULT_EXPANSION_LIMIT:
             curr_node = -1
             while self.num_of_expands_curr_iter < params.DEFAULT_EXPANSION_LIMIT_REALTIME_A_STAR:
-                print("--------- started iteration {} ------------".format(self.num_of_expands + 1))
+                if params.debug:
+                    print("--------- started iteration {} ------------".format(self.num_of_expands + 1))
                 # If fringe is empty, search agent failed and should return none
                 if self.fringe.is_empty():
                     return result(None, 0, 0, False, 0, "")
@@ -479,10 +477,7 @@ class realtime_A_star_search(AI_Agent):
                 if self.goal_test(curr_node.nodes_with_population):
                     (solution_path, people_saved) = generate_solution(curr_node)
                     del solution_path[0]
-                    print("self.path_so_far: {}".format(self.path_so_far))
-                    print("solution_path: {}".format(solution_path))
                     full_path = self.path_so_far + solution_path
-                    print("full_path: {}".format(full_path))
                     return result(full_path, people_saved, curr_node.g, True, self.num_of_expands, self.name)
                 
                 if not self.should_insert_to_close(curr_node):

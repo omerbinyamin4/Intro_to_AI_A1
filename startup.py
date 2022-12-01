@@ -60,23 +60,16 @@ def startup(input_env, debug_mode):
     if not (int(task) == 1 or int(task) == 2):
         print_error_and_exit("Task options are 1 or 2")
     if int(task) == 1:
-        human_pos = input("Enter start position for each human agent (i.e: 1,1,0)\n"
-                          "Possible positions are 0-{}\n"
-                          "Enter -1 for no human agents\n"
-                          .format(params.world_graph.num_vertices - 1)).split(',')
-
-        stupid_greedy_pos = input("Enter start position for each stupid greedy agent (i.e: 1,1,0)\n"
-                                  "Possible position are 0-{}\n"
-                                  "Enter -1 for no stupid greedy agents\n"
-                                  .format(params.world_graph.num_vertices - 1)).split(',')
-
-        saboteur_pos = input("Enter start position for each saboteur agent (i.e: 1,1,0)\n"
-                             "Possible positions are 0-{}\n"
-                             "Enter -1 for no saboteur agents\n"
-                             .format(params.world_graph.num_vertices - 1)).split(',')
-        init_agents(human_pos, params.AGENT_TYPE_HUMAN)
-        init_agents(stupid_greedy_pos, params.AGENT_TYPE_STUPID)
-        init_agents(saboteur_pos, params.AGENT_TYPE_SABOTEUR)
+        single_agent_type = input("Choose agent type:\n"
+                            "(1) Human Agent\n"
+                            "(2) Stupid Greedy Agent\n"
+                            "(3) Saboteur Agent\n")
+        if not (int(single_agent_type) >= 1 and int(single_agent_type) <= 3):
+            print_error_and_exit("Options are 1-3")
+        pos = input("Enter start position for the agent\n"
+                    "Possible positions are 0-{}:\n"
+                    .format((params.world_graph.num_vertices - 1))).split(',')
+        init_agents(pos, int(single_agent_type) - 1)
         simulate()
     elif int(task) == 2:
         single_or_multi = input("Choose mode:\n"
@@ -89,7 +82,6 @@ def startup(input_env, debug_mode):
                                       "(1) Greedy Search Agent\n"
                                       "(2) A* Search Agent\n"
                                       "(3) Real Time Search Agent\n")
-            print("single_agent_type: {}".format(single_agent_type))
             if not (int(single_agent_type) >= 1 and int(single_agent_type) <= 3):
                 print_error_and_exit("Options are 1-3")
             pos = input("Enter start position for the agent\n"
@@ -101,17 +93,17 @@ def startup(input_env, debug_mode):
             init_agents(pos, int(single_agent_type) + 2)
 
         elif int(single_or_multi) == 2:
-            greedy_search_pos = input("Enter start position for single greedy search agent\n"
+            greedy_search_pos = input("Enter start position for a single 'Greedy Search' agent\n"
                                       "Possible positions are 0-{}\n"
-                                      "Enter -1 for no greedy search agents\n"
+                                      "Enter -1 for no 'Greedy Search' agents\n"
                                       .format(params.world_graph.num_vertices - 1)).split(',')
-            a_star_search_pos = input("Enter start position for single a_star search agent\n"
+            a_star_search_pos = input("Enter start position for a single 'A*' search agent\n"
                                       "Possible positions are 0-{}\n"
-                                      "Enter -1 for no a_star search agents\n"
+                                      "Enter -1 for no 'A*' search agents\n"
                                       .format(params.world_graph.num_vertices - 1)).split(',')
-            realtime_a_star_search_pos = input("Enter start position for single realtime a_star search agent\n"
+            realtime_a_star_search_pos = input("Enter start position for a single 'Realtime A* Search' agent\n"
                                                "Possible positions are 0-{}\n"
-                                               "Enter -1 for no realtime a_star search agents\n"
+                                               "Enter -1 for no 'Realtime A* Search' agents\n"
                                                .format(params.world_graph.num_vertices - 1)).split(',')
             if realtime_a_star_search_pos[0] != '-1':
                 prompt_user_l()
@@ -132,7 +124,8 @@ def simulate():
     while params.should_simulate:
         for agent in params.agents_list:
             agent.act()
-            print_world_state()
+            if params.debug:
+                print_world_state()
         # Check if simulation should cont
         params.should_simulate = False
         for agent in params.agents_list:
@@ -155,6 +148,7 @@ def simulate_2():
     # run all agents at turns
     for agent in params.agents_list:
         results.append(agent.act())
+        print("'{}' finished acting".format(agent.get_name()))
 
     # print all results
     for res in results:
