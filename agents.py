@@ -2,10 +2,6 @@ import params
 from utils import *
 from minHeap import *
 
-temp_l = 10
-temp_l2 = 10000
-
-
 def calc_sum_of_people_saved(visited_vertex_id_list):
     sum_of_people_saved = 0
     for visited_vertex_id in visited_vertex_id_list:
@@ -294,18 +290,23 @@ class AI_Agent(Agent):
     def expand_and_insert_to_fringe(self, expanded_node):
         graph_vertex = get_vertex_from_id(expanded_node.id)
         if graph_vertex is not None:
-            neigbors_h_list = []
+            neigbors_node_list = []
+            if params.debug:
+                print("---- neigbors of expanded node")
             for neighbor_id in graph_vertex.adjacent.keys():
                 parent = expanded_node
                 neighbor_g = self.calc_new_g(expanded_node, neighbor_id)
                 neighbor_node = self.create_node(neighbor_id, parent, expanded_node.broken_nodes,
                                                  expanded_node.nodes_with_population, neighbor_g)
-                neighbor_node.print_search_tree_node()
+                if params.debug:
+                    neighbor_node.print_search_tree_node()
                 neighbor_f = self.calc_f(neighbor_node)
                 self.fringe.insert_element(HeapElement(neighbor_f, neighbor_node))
-                neigbors_h_list.append(neighbor_f - neighbor_g)
+                neigbors_node_list.append(neighbor_node)
+            if params.debug:
+                print("----")
             self.num_of_expands += 1
-            return neigbors_h_list
+            return neigbors_node_list
         else:
             print_error_and_exit("Given invalid vertex_id")
 
@@ -347,14 +348,21 @@ class AI_Agent(Agent):
                     return False
         return True  # node with same id doesn't exist in close
 
+    def is_neigbor_of_root_node(self, node):
+        if node.parent.parent is None:
+            return True
+        elif node.parent is None:
+            print_error_and_exit("Didn't excpect to get root node")
+        return False
 class Greedy_search(AI_Agent):
     def __init__(self, pos, h_func):
         super().__init__(pos, h_func, params.AGENT_TYPE_GREEDY_SEARCH)
         self.name = "greedy stupid"
 
     def act(self):
-        while self.num_of_expands < temp_l2:
-            print("--------- started iteration ------------")
+        while self.num_of_expands < DEFAULT_EXPANSION_LIMIT:
+            if params.debug:
+                print("--------- started iteration {} ------------".format(self.num_of_expands + 1))
             # If fringe is empty, search agent failed and should return none
             if self.fringe.is_empty():
                 return result(None, 0, 0, False, self.num_of_expands, "")
@@ -378,7 +386,8 @@ class Greedy_search(AI_Agent):
 
             self.expand_and_insert_to_fringe(curr_node)
 
-            print("--------- finished iteration ------------")
+            if params.debug:
+                print("--------- finished iteration {} ------------".format(self.num_of_expands))
 
         return result(None, 0, 0, False, 0, "")
 
@@ -387,13 +396,14 @@ class A_star_search(AI_Agent):
     def __init__(self, pos, h_func):
         super().__init__(pos, h_func, params.AGENT_TYPE_A_STAR_SEARCH)
         self.close = []
-        self.name = "A_star search"
+        self.name = "A* search"
 
     def act(self):
         print("{} started acting\n".format(self.get_name()))
 
-        while self.num_of_expands < temp_l2:
-            print("--------- started iteration ------------")
+        while self.num_of_expands < params.DEFAULT_EXPANSION_LIMIT:
+            if params.debug:
+                print("--------- started iteration {} ------------".format(self.num_of_expands + 1))
             # If fringe is empty, search agent failed and should return none
             if self.fringe.is_empty():
                 return result(None, 0, 0, False, 0, "")
@@ -420,13 +430,16 @@ class A_star_search(AI_Agent):
 
             self.add_to_close(curr_node.id, curr_node.g, curr_node.h)
             if params.debug:
-                print(self.close)
+                print("close list: {}".format(self.close))
 
-            neigbors_h_list = self.expand_and_insert_to_fringe(curr_node)
+            neigbors_nodes_list = self.expand_and_insert_to_fringe(curr_node)
+            neigbors_h_list = [node.h for node in neigbors_nodes_list]
+            print(neigbors_h_list)
             if all_infi(neigbors_h_list):
                 dict_to_remove = {"id": curr_node.id, "f": self.calc_f(curr_node)}
                 self.close.remove(dict_to_remove)
-            print("--------- finished iteration ------------")
+            if params.debug:
+                print("--------- finished iteration {} ------------".format(self.num_of_expands))
         
         return result(None, 0, 0, False, 0, "")
 
@@ -434,16 +447,18 @@ class realtime_A_star_search(AI_Agent):
     def __init__(self, pos, h_func):
         super().__init__(pos, h_func, params.AGENT_TYPE_REALTIME_A_STAR_SEARCH)
         self.close = []
-        self.name = "Realtime A_star search"
+        self.name = "Realtime A* search"
+        self.path_so_far = []
+        self.first_neigbors_nodes = []
         self.num_of_expands_curr_iter = 0
-        self.temp_path = []
 
     def act(self):
         print("{} started acting\n".format(self.get_name()))
 
-        while self.num_of_expands < temp_l2:
-            while self.num_of_expands < temp_l:
-                print("--------- started iteration ------------")
+        while self.num_of_expands < params.DEFAULT_EXPANSION_LIMIT:
+            curr_node = -1
+            while self.num_of_expands_curr_iter < params.DEFAULT_EXPANSION_LIMIT_REALTIME_A_STAR:
+                print("--------- started iteration {} ------------".format(self.num_of_expands + 1))
                 # If fringe is empty, search agent failed and should return none
                 if self.fringe.is_empty():
                     return result(None, 0, 0, False, 0, "")
@@ -463,34 +478,68 @@ class realtime_A_star_search(AI_Agent):
                 # Check if goal_test is achieved - if yes finish simulation with solution
                 if self.goal_test(curr_node.nodes_with_population):
                     (solution_path, people_saved) = generate_solution(curr_node)
-                    return result(solution_path, people_saved, curr_node.g, True, self.num_of_expands, self.name)
-
+                    del solution_path[0]
+                    print("self.path_so_far: {}".format(self.path_so_far))
+                    print("solution_path: {}".format(solution_path))
+                    full_path = self.path_so_far + solution_path
+                    print("full_path: {}".format(full_path))
+                    return result(full_path, people_saved, curr_node.g, True, self.num_of_expands, self.name)
+                
                 if not self.should_insert_to_close(curr_node):
                     continue
 
                 self.add_to_close(curr_node.id, curr_node.g, curr_node.h)
                 if params.debug:
-                    print(self.close)
+                    print("close list: {}".format(self.close))
 
-                neigbors_h_list = self.expand_and_insert_to_fringe(curr_node)
+                neigbors_nodes_list = self.expand_and_insert_to_fringe(curr_node)
+                neigbors_h_list = [node.h for node in neigbors_nodes_list]
+                
                 if all_infi(neigbors_h_list):
                     dict_to_remove = {"id": curr_node.id, "f": self.calc_f(curr_node)}
                     self.close.remove(dict_to_remove)
+
+                if self.num_of_expands_curr_iter == 0:
+                    self.path_so_far.append(curr_node.id)
+                    self.first_neigbors_nodes = neigbors_nodes_list.copy()
+                
                 self.num_of_expands_curr_iter += 1
-                print("--------- finished iteration ------------")
+                if params.debug:
+                    print("--------- finished iteration {} ------------".format(self.num_of_expands))
             
-            curr_decided_node = self.realtime_got_to_limit()
+            if params.debug:
+                print("-------- finished realtime iter")
+            curr_decided_node = self.realtime_got_to_limit(curr_node)
+            curr_decided_node.reset_parent()
+            self.fringe.insert_element(HeapElement(self.calc_f(curr_decided_node), curr_decided_node))
+            self.num_of_expands_curr_iter = 0
+            
 
         return result(None, 0, 0, False, 0, self.name)
 
-    def realtime_got_to_limit(self):
+    def realtime_got_to_limit(self, curr_node):
         if self.fringe.is_empty():
             return result(None, 0, 0, False, 0, self.name)
+        self.empty_fringe()
+        self.empty_close()       
+        return self.choose_node_from_first_neigbors(curr_node)
 
     def empty_fringe(self):
         while not self.fringe.is_empty():
             self.fringe.extract_min()
+    
+    def empty_close(self):
+        self.close = []
 
+    def choose_node_from_first_neigbors(self, curr_node):
+        while not self.is_neigbor_of_root_node(curr_node):
+            curr_node = curr_node.parent
+        if params.debug:
+            print("---- node chosen in curr realtime iter:")
+            curr_node.print_search_tree_node()
+        if curr_node is None:
+            print_error_and_exit("chosen node for realtime A* is None")
+        return curr_node
 class result:
     def __init__(self, solution_path, people_saved, sum_of_weights, is_success, expands, agent_name):
         self.solution_path = solution_path
@@ -501,10 +550,10 @@ class result:
         self.agent_name = agent_name
 
     def print_result(self):
-        print("solution_path: {}".format(self.solution_path))
-        print("people_saved: {}".format(self.people_saved))
-        print("sum_of_weights: {}".format(self.sum_of_weights))
+        print("solution path: {}".format(self.solution_path))
+        print("people saved: {}".format(self.people_saved))
+        print("sum of weights traveled by agent: {}".format(self.sum_of_weights))
         print("num of expands taken: {}".format(self.num_of_expands))
-        print("time taken for search: {}".format(self.num_of_expands * params.T))
+        print("time taken for search (T*num_of_expands): {}".format(self.num_of_expands * params.DEFAULT_T))
         print("score v1 (people_saved*1000 - sum_of_weights) = {}".format(self.people_saved * 1000 - self.sum_of_weights))
-        print("score v2 (people_saved*1000 - time taken) = {}".format(self.people_saved * 1000 - (self.num_of_expands * params.T)))
+        print("score v2 (people_saved*1000 - time_taken) = {}".format(self.people_saved * 1000 - (self.num_of_expands * params.DEFAULT_T)))

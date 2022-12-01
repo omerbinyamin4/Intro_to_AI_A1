@@ -20,7 +20,6 @@ class MinHeap:
 
     # Inserts a new element with key 'k' and value 'v'
     def insert_element(self, e):
-        print(e.key)
         heappush(self.heap, (e.key, e.value))
 
         # Decrease value of key at index 'i' to new_val
@@ -66,7 +65,7 @@ class HeapElement:
 class Search_tree_node:
     def __init__(self, id, parent, broken_list, population_list, g, h, node_hash):
         self.id = id
-        self.parent = parent #todo figure out how to add parent
+        self.parent = parent
         self.broken_nodes = broken_list
         self.nodes_with_population = population_list
         self.g = g # Cost so far to reach current node
@@ -93,3 +92,6 @@ class Search_tree_node:
             print("\tparent_id: {}".format(self.parent.id))
         else:
             print("\tparent is None")
+
+    def reset_parent(self):
+        self.parent = None

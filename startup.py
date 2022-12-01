@@ -57,52 +57,61 @@ def startup(input_env, debug_mode):
     params.debug = debug_mode
     init_graph_from_file(input_env)
     task = input("Insert task number to run:\n")
+    if not (int(task) == 1 or int(task) == 2):
+        print_error_and_exit("Task options are 1 or 2")
     if int(task) == 1:
-        human_pos = input("enter start position for each human agent (i.e: 1,1,0)\n"
-                          "possible positions are 0-{}\n"
-                          "enter -1 for no human agents\n"
+        human_pos = input("Enter start position for each human agent (i.e: 1,1,0)\n"
+                          "Possible positions are 0-{}\n"
+                          "Enter -1 for no human agents\n"
                           .format(params.world_graph.num_vertices - 1)).split(',')
 
-        stupid_greedy_pos = input("enter start position for each stupid greedy agent (i.e: 1,1,0)\n"
-                                  "possible position are 0-{}\n"
-                                  "enter -1 for no stupid greedy agents\n"
+        stupid_greedy_pos = input("Enter start position for each stupid greedy agent (i.e: 1,1,0)\n"
+                                  "Possible position are 0-{}\n"
+                                  "Enter -1 for no stupid greedy agents\n"
                                   .format(params.world_graph.num_vertices - 1)).split(',')
 
-        saboteur_pos = input("enter start position for each saboteur agent (i.e: 1,1,0)\n"
-                             "possible positions are 0-{}\n"
-                             "enter -1 for no saboteur agents\n"
+        saboteur_pos = input("Enter start position for each saboteur agent (i.e: 1,1,0)\n"
+                             "Possible positions are 0-{}\n"
+                             "Enter -1 for no saboteur agents\n"
                              .format(params.world_graph.num_vertices - 1)).split(',')
-        # TODO : can an agent start in a brittle vertex?
         init_agents(human_pos, params.AGENT_TYPE_HUMAN)
         init_agents(stupid_greedy_pos, params.AGENT_TYPE_STUPID)
         init_agents(saboteur_pos, params.AGENT_TYPE_SABOTEUR)
         simulate()
     elif int(task) == 2:
-        single_or_multi = input("choose mode:\n"
-                                "(1) single agent\n"
-                                "(2) multi agent\n")
+        single_or_multi = input("Choose mode:\n"
+                                "(1) Single agent\n"
+                                "(2) Multi agent\n")
+        if not (int(single_or_multi) == 1 or int(single_or_multi) == 2):
+            print_error_and_exit("Options are 1 or 2")
         if int(single_or_multi) == 1:
-            single_agent_type = input("choose agent type:\n"
+            single_agent_type = input("Choose agent type:\n"
                                       "(1) Greedy Search Agent\n"
                                       "(2) A* Search Agent\n"
-                                      "(3) Real Time Search Agent\n").split(',')
-            pos = input("enter start position for the agent:\n").split(',')
-            if single_agent_type[0] == '3':
+                                      "(3) Real Time Search Agent\n")
+            print("single_agent_type: {}".format(single_agent_type))
+            if not (int(single_agent_type) >= 1 and int(single_agent_type) <= 3):
+                print_error_and_exit("Options are 1-3")
+            pos = input("Enter start position for the agent\n"
+                        "Possible positions are 0-{}:\n"
+                        .format((params.world_graph.num_vertices - 1))).split(',')
+                    
+            if single_agent_type == '3':
                 prompt_user_l()
-            init_agents(pos, int(single_agent_type[0]) + 2)
+            init_agents(pos, int(single_agent_type) + 2)
 
         elif int(single_or_multi) == 2:
-            greedy_search_pos = input("enter start position for single greedy search agent\n"
-                                      "possible positions are 0-{}\n"
-                                      "enter -1 for no greedy search agents\n"
+            greedy_search_pos = input("Enter start position for single greedy search agent\n"
+                                      "Possible positions are 0-{}\n"
+                                      "Enter -1 for no greedy search agents\n"
                                       .format(params.world_graph.num_vertices - 1)).split(',')
-            a_star_search_pos = input("enter start position for single a_star search agent\n"
-                                      "possible positions are 0-{}\n"
-                                      "enter -1 for no a_star search agents\n"
+            a_star_search_pos = input("Enter start position for single a_star search agent\n"
+                                      "Possible positions are 0-{}\n"
+                                      "Enter -1 for no a_star search agents\n"
                                       .format(params.world_graph.num_vertices - 1)).split(',')
-            realtime_a_star_search_pos = input("enter start position for single realtime a_star search agent\n"
-                                               "possible positions are 0-{}\n"
-                                               "enter -1 for no realtime a_star search agents\n"
+            realtime_a_star_search_pos = input("Enter start position for single realtime a_star search agent\n"
+                                               "Possible positions are 0-{}\n"
+                                               "Enter -1 for no realtime a_star search agents\n"
                                                .format(params.world_graph.num_vertices - 1)).split(',')
             if realtime_a_star_search_pos[0] != '-1':
                 prompt_user_l()
@@ -113,8 +122,6 @@ def startup(input_env, debug_mode):
         prompt_user_t()
 
         simulate_2()
-    else:
-        print("Error: inserted non existing task number: {}".format(int(task)))
 
 
 def simulate():
@@ -163,19 +170,23 @@ def simulate_2():
 def prompt_user_l():
     should_use_def_l = input("Do you want to define new limit of expansions for the realtime A* agent?\n"
                              "(1) - Yes\n"
-                             "(0) - No\n")
+                             "(0) - No - keep default of 10\n")
+    if not (int(should_use_def_l) == 0 or int(should_use_def_l) == 1):
+        print_error_and_exit("Options are 0 or 1")                       
     if int(should_use_def_l) == 1:
-        user_l = input("insert limit of expansion for the realtime A* agent\n")
-        params.user_L = int(user_l[0])
+        user_l = input("Insert limit of expansion for the realtime A* agent:\n")
+        params.DEFAULT_EXPANSION_LIMIT_REALTIME_A_STAR = int(user_l[0])
 
 
 def prompt_user_t():
-    should_use_def_l = input("Do you want to define new T value for performance measurement?\n"
+    should_use_def_t = input("Do you want to define new T value for performance measurement?\n"
                              "(1) - Yes\n"
-                             "(0) - No\n")
-    if int(should_use_def_l) == 1:
-        user_t = input("insert T value for performance measurement\n")
-        params.T = int(user_t[0])
+                             "(0) - No - keep default of 0\n")
+    if not (int(should_use_def_t) == 0 or int(should_use_def_t) == 1):
+        print_error_and_exit("Options are 0 or 1")    
+    if int(should_use_def_t) == 1:
+        user_t = input("Insert T value for performance measurement:\n")
+        params.DEFAULT_T = float(user_t[0])
 
 
 if __name__ == '__main__':
